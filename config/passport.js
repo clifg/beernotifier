@@ -52,9 +52,6 @@ passport.use('local-signup', new LocalStrategy({
 
                 newUser.local.password = undefined;
 
-                console.log('everything is good from passport...');
-                console.log('expect it to get: ' + newUser['isAdmin']);
-
                 return done(null, newUser);
             });
         }
@@ -80,6 +77,11 @@ passport.use('local-login', new LocalStrategy({
         if (!user.validPassword(password)) {
             console.log('AUTH: Invalid password');
             return done(null, false, { message: 'Invalid password.'});
+        }
+
+        if (!user.activation_code || (user.activation_code !== 'X')) {
+            console.log('AUTH: User not yet activated');
+            return done(null, false, { message: 'Email address not yet confirmed. Please check your email and click the link.'});
         }
 
         return done(null, user);

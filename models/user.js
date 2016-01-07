@@ -9,7 +9,11 @@ var userSchema = new Schema({
         password: { type: String, required: true }
     },
 
-    isAdmin: { type: Boolean, default: false }
+    isAdmin: { type: Boolean, default: false },
+    isActivated: { type: Boolean, default: false },
+    activation_code: String,
+    password_reset_code: String,
+    password_reset_time: Date
 });
 
 userSchema.methods.generateHash = function(password) {

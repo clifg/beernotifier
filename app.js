@@ -10,7 +10,10 @@ var MongoStore = require('connect-mongo')(session);
 var mongoose = require('mongoose');
 var passport = require('passport');
 var flash = require('connect-flash');
+var activator = require('activator');
 var nodemailer = require('nodemailer');
+
+var User = require('./models/user');
 
 var secrets = require('./config/secrets');
 
@@ -20,6 +23,30 @@ var users = require('./routes/users');
 var app = express();
 
 mongoose.connect(secrets.db);
+
+// TODO: Use proper account for sending activation emails!
+var transport = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+      user: process.env.DAILYFANTASY_EMAIL_USERNAME,
+      pass: process.env.DAILYFANTASY_EMAIL_PASSWORD
+  }
+});
+
+activator.init({
+  user: {
+    find: function(login, callback) {
+      User.findById(login, callback);
+    },
+    save: function(id, data, callback) {
+      User.findByIdAndUpdate(id, { $set: data }, callback);
+    }
+  },
+  emailProperty: 'local.email',
+  transport: transport,
+  templates: __dirname + '/mailTemplates',
+  from: 'do_not_reply' + process.env.DAILYFANTASY_EMAIL_USERNAME
+});
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -49,20 +76,8 @@ app.use(function(req, res, next) {
   next();
 });
 
-app.post('/signup', function(req, res, next) {
-  passport.authenticate('local-signup', function(err, user, info) {
-    if (err) { return next(err); }
-    if (!user) { return res.status(400).send(info.message); }
-    req.logIn(user, function(err) {
-      if (err) { return next(err); }
-      return res.redirect('/');
-    });
-  })(req, res, next);
-});
-
-app.get('/signup', function(req, res) {
-  return res.status(200).send('you should sign up');
-});
+app.post('/signup', passport.authenticate('local-signup', { session: false }), activator.createActivate);
+app.get('/activate', activator.completeActivate);
 
 app.post('/login', function(req, res, next) {
   passport.authenticate('local-login', function(err, user, info) {

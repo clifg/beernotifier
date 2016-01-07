@@ -5,8 +5,12 @@ app.controller('HomeCtrl', ['$scope', '$resource', '$location',
     }
 ]);
 
-app.controller('LoginCtrl', ['$scope', '$http', '$location',
-    function($scope, $http, $location) {
+app.controller('LoginCtrl', ['$scope', '$rootScope', '$http', '$location',
+    function($scope, $rootScope, $http, $location) {
+        if ($rootScope.user) {
+            return $location.path('/');
+        };
+
         $scope.alerts = [];
 
         $scope.login = function(email, password) {
@@ -36,7 +40,8 @@ app.controller('SignupCtrl', ['$scope', '$http', '$location',
             $scope.alerts = [];
             $http.post('/signup', { email: email, password: password })
                 .then(function(response) {
-                    $location.path('/');
+                    //$location.path('/');
+                    addAlert('A confirmation email has been sent to ' + email + '. Once you have confirmed your address, you can log in');
                 }, function(response) {
                     console.dir(response);
                     addAlert(response.data, 'warning');

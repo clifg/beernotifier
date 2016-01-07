@@ -1,7 +1,9 @@
-Activate Email
+Seattle Beer Finder Account Activation
 -------
-This is where everything goes for activate. Please click on the following URL:
+Thanks for signing up at www.seattlebeerfinder.com! To confirm your email address and activate your account, please click this link:
 
-<%= request.protocol %>://<%= request.headers.host %>/activate/my/account?code=<%= code %>&email=<%= email %>&user=<%= id %>
+<%= request.protocol %>://<%= request.headers.host %>/activate?code=<%= code %>&user=<%= id %>
+
+If you did not sign up for this account, you can ignore this email.
 
 Thanks!
