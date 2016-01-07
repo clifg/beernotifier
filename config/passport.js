@@ -1,7 +1,5 @@
 var passport = require('passport');
-var LocalStrategy = require('passport-local').Strategy;
-
-var owasp = require('owasp-password-strength-test');
+var FacebookStrategy = require('passport-facebook').Strategy;
 
 var secrets = require('./secrets');
 var User = require('../models/user');
@@ -19,69 +17,32 @@ passport.deserializeUser(function(id, done) {
   });
 });
 
-passport.use('local-signup', new LocalStrategy({
-    usernameField: 'email',
-    passwordField: 'password',
-    passReqToCallback: true
-}, function(req, email, password, done) {
-    User.findOne({ 'local.email': email })
-        .exec(function(err, user) {
-        if (err) {
-            console.log(' ! Database error finding user for email ' + email);
-            return done(err);
-        }
+passport.use(new FacebookStrategy(secrets.facebook, function(req, accessToken, refreshToken, profile, done) {
+    User.findOne({ 'facebook.id': profile.id }, function(err, existingUser) {
+        if (err) { return done(err); }
 
-        if (user) {
-            return done(null, false, { message: 'That email is already taken.'});
+        if (existingUser) {
+            return done(null, existingUser);
         } else {
-            var passwordResult = owasp.test(password);
-            if (!passwordResult.strong) {
-                console.log(' ! Rejecting weak password');
-                return done(null, false, { message: passwordResult.errors[0] });
-            }
+            // New user! Create an account in our database
+            console.log('New user!');
+            console.dir(profile);
             
-            var newUser = new User();
+            var user = new User();
 
-            newUser.local.email = email;
-            newUser.local.password = newUser.generateHash(password);
+            user.facebook.id = profile.id;
+            user.facebook.token = accessToken;
+            user.facebook.email = profile._json.email;
+            user.name = profile.displayName;
+            user.picture = 'https://graph.facebook.com/' + profile.id + '/picture?type=large';
 
-            newUser.save(function(err) {
-                if (err) {
-                    throw err;
-                }
+            user.isAdmin = (profile.id == secrets.facebook.adminFacebookId);
 
-                newUser.local.password = undefined;
+            user.save(function(err) {
+                if (err) { throw err; }
 
-                console.log('everything is good from passport...');
-                console.log('expect it to get: ' + newUser['isAdmin']);
-
-                return done(null, newUser);
+                return done(null, user);
             });
         }
-    });
-}));
-
-passport.use('local-login', new LocalStrategy({
-    usernameField: 'email',
-    passwordField: 'password',
-    passReqToCallback: true
-}, function(req, email, password, done) {
-    User.findOne({ 'local.email': email })
-        .exec(function(err, user) {
-        if (err) {
-            return done(err);
-        }
-
-        if (!user) {
-            console.log('AUTH: Invalid user');
-            return done(null, false, { message: 'User not found.'});
-        }
-
-        if (!user.validPassword(password)) {
-            console.log('AUTH: Invalid password');
-            return done(null, false, { message: 'Invalid password.'});
-        }
-
-        return done(null, user);
     });
 }));
