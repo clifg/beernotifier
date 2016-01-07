@@ -1,14 +1,25 @@
 var express = require('express');
+var session = require('express-session');
 var path = require('path');
 var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
+var MongoStore = require('connect-mongo')(session);
+var mongoose = require('mongoose');
+var passport = require('passport');
+var flash = require('connect-flash');
+var nodemailer = require('nodemailer');
+
+var secrets = require('./config/secrets');
+
 var routes = require('./routes/index');
 var users = require('./routes/users');
 
 var app = express();
+
+mongoose.connect(secrets.db);
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -20,10 +31,64 @@ app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
+app.use(session({
+  resave: true,
+  saveUninitialized: true,
+  secret: 'seahawkmarinersounder',
+  cookie: { maxAge: 60000, expires: new Date(new Date().getTime() + 14 * 24 * 60 * 60 * 1000) },
+  store: new MongoStore({ mongooseConnection: mongoose.connection, autoReconnect: true })
+}));
+app.use(passport.initialize());
+app.use(passport.session());
+app.use(flash());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Ensure every page has access to the current user
+app.use(function(req, res, next) {
+  res.locals.user = req.user;
+  next();
+});
+
+app.post('/signup', function(req, res, next) {
+  passport.authenticate('local-signup', function(err, user, info) {
+    if (err) { return next(err); }
+    if (!user) { return res.status(400).send(info.message); }
+    req.logIn(user, function(err) {
+      if (err) { return next(err); }
+      return res.redirect('/');
+    });
+  })(req, res, next);
+});
+
+app.get('/signup', function(req, res) {
+  return res.status(200).send('you should sign up');
+});
+
+app.post('/login', function(req, res, next) {
+  passport.authenticate('local-login', function(err, user, info) {
+    if (err) { return next(err); }
+    if (!user) { return res.status(401).send(info.message); }
+    req.logIn(user, function(err) {
+      if (err) { return next(err); }
+      return res.redirect('/');
+    });
+  })(req, res, next);
+});
+
+app.get('/logout', function(req, res) {
+  req.logout();
+  res.sendStatus(200);
+});
+
 app.use('/', routes);
-app.use('/users', users);
+app.use('/api/v1/users', users);
+app.get('/api/v1/login', function(req, res) {
+  if (req.user) {
+    return res.json(req.user);
+  }
+
+  return res.sendStatus(401);
+});
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

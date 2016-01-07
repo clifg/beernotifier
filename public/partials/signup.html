@@ -1,0 +1,21 @@
+<div class="container">
+  <div class="col-sm-6 col-sm-offset-3">
+    <h1><span class="fa fa-sign-in"></span> Signup</h1>
+
+    <form>
+      <div name="signupForm" class="form-group">
+        <label>email</label>
+        <input type="email" name="email" required class="form-control" ng-model="email">
+      </div>
+      <div class="form-group">
+        <label>password</label>
+        <input type="password" class="form-control" ng-model="password">
+      </div>
+
+      <uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)">{{alert.msg}}</uib-alert>
+      <button class="btn btn-warning btn-lg" ng-click="signup(email, password)">Signup</button>
+    </form>
+    <br>
+    <p>Already have an account? <a href="#/login">Login</a></p>
+  </div>
+</div>
