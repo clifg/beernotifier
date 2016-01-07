@@ -6,10 +6,3 @@ body {
 a {
   color: #00B7FF;
 }
-
-/* Navbar */
-.navbar-nav img {
-    width: 30px;
-    height: 30px;
-    margin: -15px 15px -15px;
-}

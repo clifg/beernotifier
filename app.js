@@ -49,13 +49,36 @@ app.use(function(req, res, next) {
   next();
 });
 
+app.post('/signup', function(req, res, next) {
+  passport.authenticate('local-signup', function(err, user, info) {
+    if (err) { return next(err); }
+    if (!user) { return res.status(400).send(info.message); }
+    req.logIn(user, function(err) {
+      if (err) { return next(err); }
+      return res.redirect('/');
+    });
+  })(req, res, next);
+});
+
+app.get('/signup', function(req, res) {
+  return res.status(200).send('you should sign up');
+});
+
+app.post('/login', function(req, res, next) {
+  passport.authenticate('local-login', function(err, user, info) {
+    if (err) { return next(err); }
+    if (!user) { return res.status(401).send(info.message); }
+    req.logIn(user, function(err) {
+      if (err) { return next(err); }
+      return res.redirect('/');
+    });
+  })(req, res, next);
+});
+
 app.get('/logout', function(req, res) {
   req.logout();
   res.sendStatus(200);
 });
-
-app.get('/auth/facebook', passport.authenticate('facebook', { scope: ['public_profile', 'email'] }));
-app.get('/auth/facebook/callback', passport.authenticate('facebook', { failureRedirect: '/login', successRedirect: '/' }));
 
 app.use('/', routes);
 app.use('/api/v1/users', users);

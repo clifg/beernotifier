@@ -25,6 +25,10 @@ app.config(['$routeProvider', function($routeProvider){
                 }]
             }
         })
+        .when('/signup', {
+            templateUrl: 'partials/signup.html',
+            controller: 'SignupCtrl'
+        })
         .otherwise({
             redirectTo: '/'
         });
@@ -32,9 +36,8 @@ app.config(['$routeProvider', function($routeProvider){
 
 app.run(['$rootScope', '$resource', '$location', '$route', function($rootScope, $resource, $location, $route) {
     $rootScope.$on('$routeChangeStart', function(event, next, current) {
-        if ($rootScope.user == null) {
-            console.log('No user in the rootscope!');
-
+        if ($rootScope.user == null)
+        {
             var Login = $resource('/api/v1/login');
 
             Login.get(function(user) {
