@@ -5,7 +5,7 @@ var mongoose = require('mongoose');
 
 // Data Models
 var DataSource = require('../models/dataSource');
-var TapListing = require('../models/TapListing');
+var TapListing = require('../models/tapListing');
 
 // Scraper modules
 var chucksGreenwood = require('../scrapers/chucksGreenwood');
