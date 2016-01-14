@@ -10,7 +10,6 @@ var userSchema = new Schema({
     },
 
     isAdmin: { type: Boolean, default: false },
-    isActivated: { type: Boolean, default: false },
     activation_code: String,
     password_reset_code: String,
     password_reset_time: Date

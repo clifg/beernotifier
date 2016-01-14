@@ -1,0 +1,148 @@
+#!/usr/bin/env node
+
+var secrets = require('../config/secrets');
+var mongoose = require('mongoose');
+
+// Data Models
+var DataSource = require('../models/dataSource');
+var TapListing = require('../models/TapListing');
+
+// Scraper modules
+var chucksGreenwood = require('../scrapers/chucksGreenwood');
+
+var async = require('async');
+
+mongoose.connect(secrets.db);
+
+var scrapers = {
+    'chucksGreenwood': chucksGreenwood,
+    'anotherChucksGreenwood': chucksGreenwood
+};
+
+function addDataSource(callback) {
+    var newDataSource = new DataSource();
+    newDataSource.scraper = 'chucksGreenwood';
+    newDataSource.name = 'Chucks Hop Shop Greenwood';
+    newDataSource.homeUrl = 'http://chucks85th.com';
+    newDataSource.updateFrequency = 0;
+
+    newDataSource.save(function(err, dataSource) {
+        if (err) {
+            console.log('Error saving new data source!');
+            console.dir(err);
+            return callback(err);
+        }
+
+        console.dir(dataSource);
+        callback();
+    });
+};
+
+function scrapeDataSources(callback) {
+    DataSource.find({}, function(err, dataSources) {
+        if (err) {
+            console.log('ERROR: Failed to read data sources from the database');
+            return callback();
+        }
+
+        async.forEach(dataSources, function(dataSource, itrCallback) {
+            console.log('Updating data source: ' + dataSource.name);
+
+            var scraper = scrapers[dataSource.scraper];
+            scraper.scrapeSite(function(err, tapListings) {
+                if (err) {
+                    console.log('ERROR: Failed to scrape ' + dataSource.name);
+                    console.dir(err);
+                    return itrCallback();
+                }
+                storeTapListings(dataSource, tapListings, itrCallback);
+            });
+        }, function(err) {
+            console.log('Finished updating data sources');
+            callback();
+        });
+    });
+};
+
+function storeTapListings(dataSource, tapListings, callback) {
+    TapListing.find({ dataSource: dataSource }, function(err, currentListings) {
+        var newListings = tapListings.filter(function(newTap) {
+            return !currentListings.some(function(currentTap) {
+                return currentTap.rawListing === newTap.rawListing;
+            });
+        });
+
+        var removedListings = currentListings.filter(function(currentTap) {
+            return !tapListings.some(function(newTap) {
+                return newTap.rawListing === currentTap.rawListing;
+            });
+        });
+
+        var operations = [];
+
+        console.log('New listings:');
+        for (var i = 0; i < newListings.length; i++) {
+            console.log(' + ' + newListings[i].rawListing + ' (' + newListings[i].price + ')');
+            operations.push({ listing: newListings[i], type: 'add' });
+        }
+        console.log('\n');
+
+        console.log('Removed Listings:');
+        for (var i = 0; i < removedListings.length; i++) {
+            console.log(' + ' + removedListings[i].rawListing + ' (' + removedListings[i].price + ')');
+            operations.push({ listing: removedListings[i], type: 'remove' });
+        }
+        console.log('\n');
+
+        async.forEach(operations, function(operation, itrCallback) {
+            switch(operation.type) {
+                case 'add':
+                    var newTapListing = new TapListing();
+                    newTapListing.rawListing = operation.listing.rawListing;
+                    if (typeof operation.listing.price !== 'undefined') {
+                        newTapListing.price = operation.listing.price;
+                    }
+                    newTapListing.dataSource = dataSource;
+                    newTapListing.createdDate = new Date();
+                    newTapListing.isActive = true;
+
+                    newTapListing.save(function(err, listing) {
+                        if (err) {
+                            console.log('ERROR: Error saving tap listing: ' + listing.rawListing);
+                            console.dir(err);
+                            return itrCallback();
+                        }
+
+                        console.log('Stored listing: ' + listing.rawListing);
+                        return itrCallback();
+                    });
+                    break;
+
+                case 'remove':
+                    console.log('Removing listing: ' + operation.listing.rawListing);
+                    TapListing.findById(operation.listing.id).remove(function(err) {
+                        if (err) {
+                            console.log('ERROR: Error deleting tap listing');
+                            console.dir(err);
+                        }
+                        return itrCallback();
+                    });
+                    break;
+                };
+        }, function(err) {
+            console.log('Finished adding tap listings for ' + dataSource.name);
+            callback();
+        });
+    });
+};
+
+async.series([
+    /*function(callback) {
+        addDataSource(callback);
+    },*/
+    function(callback) {
+        scrapeDataSources(callback);
+    }
+], function() {
+    process.exit();
+});
