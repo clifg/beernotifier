@@ -6,7 +6,7 @@ var dataSourceSchema = new Schema({
     name: { type: String, trim: true, required: true },
     homeUrl: { type: String, trim: true, required: true},
     updateFrequency: Number, // Minutes between updates -- 0 to update every time the script runs
-    lastUpdate: Date
+    updates: [Date]
 });
 
 var DataSource = mongoose.model('DataSource', dataSourceSchema);

@@ -108,7 +108,18 @@ function storeBeers(dataSource, beers, callback) {
                 };
         }, function(err) {
             console.log('Finished updating tap listings for ' + dataSource.name);
-            callback();
+
+            if (operations.length == 0) {
+                return callback();
+            }
+
+            dataSource.update({ $push: { updates: new Date() }}, function(err, item) {
+                if (err) {
+                    console.log('ERROR: Error adding update timestamp to dataSource!');
+                }
+
+                return callback();
+            });
         });
     });
 };
