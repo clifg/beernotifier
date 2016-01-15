@@ -14,7 +14,7 @@ module.exports = {
 
             $ = cheerio.load(body);
 
-            beers = [];
+            var beers = [];
             $('span.views-field-field-beer').each(function(i, element) {
                 beers.push($(this).children('span.field-content').children('a').text());
             });

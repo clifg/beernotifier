@@ -14,7 +14,7 @@ module.exports = {
 
             $ = cheerio.load(body);
 
-            beers = [];
+            var beers = [];
             $('td.draft_brewery').each(function(i, element) {
                 var brewery = $(this).text();
                 var beer = $(this).nextAll('td.draft_name').text();

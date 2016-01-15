@@ -14,7 +14,7 @@ module.exports = {
 
             $ = cheerio.load(body);
 
-            beers = [];
+            var beers = [];
 
             // There are two tables on the page. The first is the draft list.
             $('tbody').first().children('tr').each(function(i, element) {

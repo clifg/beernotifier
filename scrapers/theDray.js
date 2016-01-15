@@ -12,7 +12,7 @@ module.exports = {
                     return callback('Failed to fetch taplist data!');
                 }
                 
-                beers = [];
+                var beers = [];
                 JSON.stringify(data);
 
                 for (var i = 0; i < data.length; i++) {

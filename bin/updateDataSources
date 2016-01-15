@@ -17,6 +17,7 @@ var nakedCity = require('../scrapers/nakedCity');
 var prostTavern = require('../scrapers/prostTavern');
 var theNobleFir = require('../scrapers/theNobleFir');
 var theSixgill = require('../scrapers/theSixgill');
+var theBarkingDog = require('../scrapers/theBarkingDog');
 
 var async = require('async');
 
@@ -31,7 +32,8 @@ var scrapers = {
     'nakedCity': nakedCity,
     'prostTavern': prostTavern,
     'theNobleFir': theNobleFir,
-    'theSixgill': theSixgill
+    'theSixgill': theSixgill,
+    'theBarkingDog': theBarkingDog
 };
 
 function scrapeDataSources(callback) {
@@ -57,7 +59,7 @@ function scrapeDataSources(callback) {
                     console.log('ERROR: Found no beers at ' + dataSource.name);
                     return itrCallback();
                 }
-                
+
                 storeBeers(dataSource, beers, itrCallback);
             });
         }, function(err) {

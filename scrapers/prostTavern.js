@@ -20,7 +20,7 @@ module.exports = {
 
             $ = cheerio.load(body);
 
-            beers = [];
+            var beers = [];
             $('.menu-item-title').each(function(i, element) {
                 beers.push($(this).text().trim());
             });
