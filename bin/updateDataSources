@@ -11,6 +11,7 @@ var TapListing = require('../models/tapListing');
 var chucksGreenwood = require('../scrapers/chucksGreenwood');
 var theYardCafe = require('../scrapers/theYardCafe');
 var uber = require('../scrapers/uber');
+var nakedCity = require('../scrapers/nakedCity');
 
 var async = require('async');
 
@@ -19,7 +20,8 @@ mongoose.connect(secrets.db);
 var scrapers = {
     'chucksGreenwood': chucksGreenwood,
     'theYardCafe': theYardCafe,
-    'uber': uber
+    'uber': uber,
+    'nakedCity': nakedCity
 };
 
 function scrapeDataSources(callback) {
