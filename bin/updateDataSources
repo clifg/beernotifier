@@ -9,6 +9,7 @@ var TapListing = require('../models/tapListing');
 
 // Scraper modules
 var chucksGreenwood = require('../scrapers/chucksGreenwood');
+var chucksCentralDistrict = require('../scrapers/chucksCentralDistrict');
 var theYardCafe = require('../scrapers/theYardCafe');
 var uber = require('../scrapers/uber');
 var nakedCity = require('../scrapers/nakedCity');
@@ -19,6 +20,7 @@ mongoose.connect(secrets.db);
 
 var scrapers = {
     'chucksGreenwood': chucksGreenwood,
+    'chucksCentralDistrict': chucksCentralDistrict,
     'theYardCafe': theYardCafe,
     'uber': uber,
     'nakedCity': nakedCity
