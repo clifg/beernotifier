@@ -9,6 +9,7 @@ var TapListing = require('../models/tapListing');
 
 // Scraper modules
 var chucksGreenwood = require('../scrapers/chucksGreenwood');
+var theYardCafe = require('../scrapers/theYardCafe');
 
 var async = require('async');
 
@@ -16,26 +17,7 @@ mongoose.connect(secrets.db);
 
 var scrapers = {
     'chucksGreenwood': chucksGreenwood,
-    'anotherChucksGreenwood': chucksGreenwood
-};
-
-function addDataSource(callback) {
-    var newDataSource = new DataSource();
-    newDataSource.scraper = 'chucksGreenwood';
-    newDataSource.name = 'Chucks Hop Shop Greenwood';
-    newDataSource.homeUrl = 'http://chucks85th.com';
-    newDataSource.updateFrequency = 0;
-
-    newDataSource.save(function(err, dataSource) {
-        if (err) {
-            console.log('Error saving new data source!');
-            console.dir(err);
-            return callback(err);
-        }
-
-        console.dir(dataSource);
-        callback();
-    });
+    'theYardCafe': theYardCafe,
 };
 
 function scrapeDataSources(callback) {
@@ -45,17 +27,17 @@ function scrapeDataSources(callback) {
             return callback();
         }
 
-        async.forEach(dataSources, function(dataSource, itrCallback) {
+        async.eachSeries(dataSources, function(dataSource, itrCallback) {
             console.log('Updating data source: ' + dataSource.name);
 
             var scraper = scrapers[dataSource.scraper];
-            scraper.scrapeSite(function(err, tapListings) {
+            scraper.scrapeSite(function(err, beers) {
                 if (err) {
                     console.log('ERROR: Failed to scrape ' + dataSource.name);
                     console.dir(err);
                     return itrCallback();
                 }
-                storeTapListings(dataSource, tapListings, itrCallback);
+                storeBeers(dataSource, beers, itrCallback);
             });
         }, function(err) {
             console.log('Finished updating data sources');
@@ -64,44 +46,37 @@ function scrapeDataSources(callback) {
     });
 };
 
-function storeTapListings(dataSource, tapListings, callback) {
+function storeBeers(dataSource, beers, callback) {
     TapListing.find({ dataSource: dataSource }, function(err, currentListings) {
-        var newListings = tapListings.filter(function(newTap) {
+        var newListings = beers.filter(function(newBeer) {
             return !currentListings.some(function(currentTap) {
-                return currentTap.rawListing === newTap.rawListing;
+                return currentTap.rawListing === newBeer;
             });
         });
 
         var removedListings = currentListings.filter(function(currentTap) {
-            return !tapListings.some(function(newTap) {
-                return newTap.rawListing === currentTap.rawListing;
+            return !beers.some(function(newBeer) {
+                return newBeer === currentTap.rawListing;
             });
         });
 
         var operations = [];
 
-        console.log('New listings:');
         for (var i = 0; i < newListings.length; i++) {
-            console.log(' + ' + newListings[i].rawListing + ' (' + newListings[i].price + ')');
+            console.log(' + ' + newListings[i]);
             operations.push({ listing: newListings[i], type: 'add' });
         }
-        console.log('\n');
 
-        console.log('Removed Listings:');
         for (var i = 0; i < removedListings.length; i++) {
-            console.log(' + ' + removedListings[i].rawListing + ' (' + removedListings[i].price + ')');
+            console.log(' - ' + removedListings[i].rawListing);
             operations.push({ listing: removedListings[i], type: 'remove' });
         }
-        console.log('\n');
 
-        async.forEach(operations, function(operation, itrCallback) {
+        async.eachSeries(operations, function(operation, itrCallback) {
             switch(operation.type) {
                 case 'add':
                     var newTapListing = new TapListing();
-                    newTapListing.rawListing = operation.listing.rawListing;
-                    if (typeof operation.listing.price !== 'undefined') {
-                        newTapListing.price = operation.listing.price;
-                    }
+                    newTapListing.rawListing = operation.listing;
                     newTapListing.dataSource = dataSource;
                     newTapListing.createdDate = new Date();
                     newTapListing.isActive = true;
@@ -113,13 +88,11 @@ function storeTapListings(dataSource, tapListings, callback) {
                             return itrCallback();
                         }
 
-                        console.log('Stored listing: ' + listing.rawListing);
                         return itrCallback();
                     });
                     break;
 
                 case 'remove':
-                    console.log('Removing listing: ' + operation.listing.rawListing);
                     TapListing.findById(operation.listing.id).remove(function(err) {
                         if (err) {
                             console.log('ERROR: Error deleting tap listing');
@@ -130,16 +103,13 @@ function storeTapListings(dataSource, tapListings, callback) {
                     break;
                 };
         }, function(err) {
-            console.log('Finished adding tap listings for ' + dataSource.name);
+            console.log('Finished updating tap listings for ' + dataSource.name);
             callback();
         });
     });
 };
 
 async.series([
-    /*function(callback) {
-        addDataSource(callback);
-    },*/
     function(callback) {
         scrapeDataSources(callback);
     }

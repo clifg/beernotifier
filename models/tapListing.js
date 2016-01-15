@@ -3,7 +3,6 @@ var Schema = mongoose.Schema;
 
 var tapListingSchema = new Schema({
     rawListing: { type: String, trim: true, required: true },
-    price: Number,
     dataSource: { type: Schema.Types.ObjectId, ref: 'DataSource', required: true },
     createdDate: { type: Date, required: true },
     removedDate: { type: Date },

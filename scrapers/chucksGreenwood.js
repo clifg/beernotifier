@@ -10,11 +10,10 @@ module.exports = {
 
             $ = cheerio.load(body);
 
-            tapListings = [];
+            beers = [];
             $('td.draft_brewery').each(function(i, element) {
                 var brewery = $(this).text();
                 var beer = $(this).nextAll('td.draft_name').text();
-                var price = $(this).nextAll('td.draft_price').text().replace('$', '');
 
                 // Check for known non-beverages
                 if ((brewery.toLowerCase().indexOf('ipa flight') != -1) ||
@@ -22,15 +21,10 @@ module.exports = {
                     return;
                 }
 
-                var newEntry = {
-                    rawListing: brewery.trim() + ' ' + beer.trim(),
-                    price: Number(price)
-                };
-
-                tapListings.push(newEntry);
+                beers.push(brewery.trim() + ' ' + beer.trim());
             });
 
-            return callback(null, tapListings);
+            return callback(null, beers);
         });
     }
 };
