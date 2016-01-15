@@ -51,6 +51,13 @@ function scrapeDataSources(callback) {
                     console.dir(err);
                     return itrCallback();
                 }
+
+                if (beers.length == 0) {
+                    // If we didn't get *any* beers, then something probably went wrong
+                    console.log('ERROR: Found no beers at ' + dataSource.name);
+                    return itrCallback();
+                }
+                
                 storeBeers(dataSource, beers, itrCallback);
             });
         }, function(err) {
