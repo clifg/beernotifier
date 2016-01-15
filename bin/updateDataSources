@@ -15,6 +15,7 @@ var theDray = require('../scrapers/theDray');
 var uber = require('../scrapers/uber');
 var nakedCity = require('../scrapers/nakedCity');
 var prostTavern = require('../scrapers/prostTavern');
+var theNobleFir = require('../scrapers/theNobleFir');
 
 var async = require('async');
 
@@ -27,7 +28,8 @@ var scrapers = {
     'theDray': theDray,
     'uber': uber,
     'nakedCity': nakedCity,
-    'prostTavern': prostTavern
+    'prostTavern': prostTavern,
+    'theNobleFir': theNobleFir
 };
 
 function scrapeDataSources(callback) {
