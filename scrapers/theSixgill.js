@@ -8,6 +8,10 @@ module.exports = {
                 return callback(err);
             }
 
+            if (res.statusCode != 200) {
+                return callback('Failed to fetch page. Status code: ' + res.statusCode);
+            }
+
             $ = cheerio.load(body);
 
             beers = [];

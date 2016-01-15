@@ -117,7 +117,7 @@ function storeBeers(dataSource, beers, callback) {
                     break;
                 };
         }, function(err) {
-            console.log('Finished updating tap listings for ' + dataSource.name);
+            console.log('Finished updating tap listings for ' + dataSource.name + '\n');
 
             if (operations.length == 0) {
                 return callback();
