@@ -11,6 +11,7 @@ var TapListing = require('../models/tapListing');
 var chucksGreenwood = require('../scrapers/chucksGreenwood');
 var chucksCentralDistrict = require('../scrapers/chucksCentralDistrict');
 var theYardCafe = require('../scrapers/theYardCafe');
+var theDray = require('../scrapers/theDray');
 var uber = require('../scrapers/uber');
 var nakedCity = require('../scrapers/nakedCity');
 var prostTavern = require('../scrapers/prostTavern');
@@ -23,6 +24,7 @@ var scrapers = {
     'chucksGreenwood': chucksGreenwood,
     'chucksCentralDistrict': chucksCentralDistrict,
     'theYardCafe': theYardCafe,
+    'theDray': theDray,
     'uber': uber,
     'nakedCity': nakedCity,
     'prostTavern': prostTavern
