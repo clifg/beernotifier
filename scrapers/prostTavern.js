@@ -6,7 +6,7 @@ module.exports = {
         request({
                 url: 'http://www.prosttavern.net/bier',
                 headers: {
-                    'User-Agent': 'request'
+                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36'
                 }
             },
             function(err, res, body) {
