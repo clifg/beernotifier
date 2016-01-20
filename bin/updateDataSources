@@ -75,13 +75,13 @@ function storeBeers(dataSource, beers, callback) {
     TapListing.find({ dataSource: dataSource }, function(err, currentListings) {
         var newListings = beers.filter(function(newBeer) {
             return !currentListings.some(function(currentTap) {
-                return currentTap.rawListing === newBeer;
+                return currentTap.rawListing.trim() === newBeer.trim();
             });
         });
 
         var removedListings = currentListings.filter(function(currentTap) {
             return !beers.some(function(newBeer) {
-                return newBeer === currentTap.rawListing;
+                return newBeer.trim() === currentTap.rawListing.trim();
             });
         });
 
