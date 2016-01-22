@@ -72,7 +72,7 @@ function scrapeDataSources(callback) {
 };
 
 function storeBeers(dataSource, beers, callback) {
-    TapListing.find({ dataSource: dataSource }, function(err, currentListings) {
+    TapListing.find({ dataSource: dataSource, isActive: true }, function(err, currentListings) {
         var newListings = beers.filter(function(newBeer) {
             return !currentListings.some(function(currentTap) {
                 return currentTap.rawListing.trim() === newBeer.trim();
@@ -118,12 +118,17 @@ function storeBeers(dataSource, beers, callback) {
                     break;
 
                 case 'remove':
-                    TapListing.findById(operation.listing.id).remove(function(err) {
+                    operation.listing.removedDate = new Date();
+                    operation.listing.isActive = false;
+
+                    operation.listing.save(function(err, listing) {
                         if (err) {
-                            console.log('ERROR: Error deleting tap listing');
+                            console.log('ERROR: Error updating removed tap listing: ' + listing.rawListing);
                             console.dir(err);
+                            return itrCallback();
                         }
-                        return itrCallback();
+
+                        return itrCallback(); 
                     });
                     break;
                 };
