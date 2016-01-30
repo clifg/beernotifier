@@ -30,8 +30,8 @@ mongoose.connect(secrets.db);
 var transport = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-      user: process.env.DAILYFANTASY_EMAIL_USERNAME,
-      pass: process.env.DAILYFANTASY_EMAIL_PASSWORD
+      user: process.env.BEERNOTIFIER_EMAIL_USERNAME,
+      pass: process.env.BEERNOTIFIER_EMAIL_PASSWORD
   }
 });
 
