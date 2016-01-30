@@ -1,7 +1,22 @@
 var app = angular.module('BeerNotifier');
 
-app.controller('HomeCtrl', ['$scope', '$resource', '$location',
-    function($scope, $resource, $location) {
+app.controller('HomeCtrl', ['$scope', '$resource', '$location', '$http',
+    function($scope, $resource, $location, $http) {
+        $http.get('/api/v1/dataSources')
+            .success(function(dataSources) {
+            $scope.dataSources = dataSources;
+            $http.get('/api/v1/tapListings?active=true')
+                .success(function(listings) {
+                    $scope.activeListings = listings.map(function(listing) {
+                        listing.friendlyCreatedDate = moment(listing.createdDate).format('MM/DD/YYYY h:mma');
+                        if (listing.removedDate) {
+                            listing.friendlyRemovedDate = moment(listing.removedDate).format();
+                        }
+                        return listing;
+                    });
+                }); 
+            })
+
     }
 ]);
 

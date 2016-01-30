@@ -19,6 +19,8 @@ var secrets = require('./config/secrets');
 
 var routes = require('./routes/index');
 var users = require('./routes/users');
+var tapListings = require('./routes/tapListings');
+var dataSources = require('./routes/dataSources');
 
 var app = express();
 
@@ -104,6 +106,8 @@ app.get('/api/v1/login', function(req, res) {
 
   return res.sendStatus(401);
 });
+app.use('/api/v1/taplistings', tapListings);
+app.use('/api/v1/datasources', dataSources);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

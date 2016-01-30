@@ -1,3 +1,35 @@
 <div class="container">
-  <h1>Welcome!</h1>
+    <h1>Welcome!</h1>
+
+    <div class="col-sm-3">
+        <form>
+            <div class="form-group">
+                <div class="checkbox" ng-repeat="dataSource in dataSources">
+                    <label>
+                      <input type="checkbox"> {{dataSource.name}}
+                    </label>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="col-sm-9">
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th class="col-sm-4">Beer</th>
+                    <th class="col-sm-3">Location</th>
+                    <th class="col-sm-2">Added</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="listing in activeListings">
+                    <td>{{listing.rawListing}}</td>
+                    <td>{{listing.dataSource.name}}</td>
+                    <td>{{listing.friendlyCreatedDate}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
 </div>
