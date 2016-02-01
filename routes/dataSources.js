@@ -22,4 +22,15 @@ router.get('/', function(req, res) {
     });
 });
 
+router.get('/:id', function(req, res) {
+    DataSource.findById(req.params.id)
+        .exec(function(err, dataSource) {
+        if (err) {
+            console.dir(err);
+            throw err;
+        }
+        res.json(dataSource);
+    });
+});
+
 module.exports = router;

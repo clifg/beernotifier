@@ -58,6 +58,53 @@ app.controller('HomeCtrl', ['$scope', '$resource', '$location', '$http',
     }
 ]);
 
+app.controller('LocationCtrl', ['$scope', '$resource', '$location', '$http', '$routeParams',
+    function($scope, $resource, $location, $http, $routeParams) {
+        $http.get('/api/v1/dataSources/' + $routeParams.id)
+            .success(function(dataSource) {
+                $scope.dataSource = dataSource;
+
+                // Aggregate our update timestamps by day
+                var updateCounts = {};
+                dataSource.updates.forEach(function(update) {
+                    var date = new Date(update);
+                    if (!updateCounts[date.toDateString()]) {
+                        updateCounts[date.toDateString()] = 1;
+                    } else {
+                        updateCounts[date.toDateString()] = updateCounts[date.toDateString()] + 1;
+                    }
+                });
+
+                var updateData = [];
+                for (var property in updateCounts) {
+                    if (updateCounts.hasOwnProperty(property)) {
+                        updateData.push({x: property, y: updateCounts[property]});
+                    }
+                }
+
+                $scope.options = {
+                    scales: {
+                        xAxes: [{
+                          type: "time",
+                          time: {
+                            displayFormat: 'll'
+                          },
+                          scaleLabel: {
+                            display: true,
+                            labelString: 'Time'
+                          }
+                        }],
+                        yAxes: [{
+                          position: 'left',
+                        }]
+                    }
+                };
+                $scope.series = ['Updates'];
+                $scope.data = [updateData];
+            });
+    }
+]);
+
 app.controller('LoginCtrl', ['$scope', '$rootScope', '$http', '$location',
     function($scope, $rootScope, $http, $location) {
         if ($rootScope.user) {

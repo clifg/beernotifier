@@ -6,7 +6,9 @@
                 <strong>Locations</strong> <span ng-show="filterSet">(<a ng-click="clearFilter()">clear filter</a>)</span>
                 <div class="checkbox" ng-repeat="dataSource in dataSources">
                     <label>
-                      <input type="checkbox" ng-model="dataSource.checked" ng-change="updateFilters()"> {{dataSource.name}}
+                        <input type="checkbox" ng-model="dataSource.checked" ng-change="updateFilters()"> 
+                            <a href="/#/location/{{dataSource._id}}">{{dataSource.name}}</a>
+                        </input>
                     </label>
                 </div>
             </div>

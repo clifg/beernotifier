@@ -1,10 +1,14 @@
-var app = angular.module('BeerNotifier', ['ui.bootstrap', 'ngResource', 'ngRoute']);
+var app = angular.module('BeerNotifier', ['ui.bootstrap', 'chart.js', 'ngResource', 'ngRoute']);
 
 app.config(['$routeProvider', function($routeProvider){
     $routeProvider
         .when('/', {
             templateUrl: 'partials/home.html',
             controller: 'HomeCtrl'
+        })
+        .when('/location/:id', {
+            templateUrl: 'partials/location.html',
+            controller: 'LocationCtrl'
         })
         .when('/me', {
             templateUrl: 'partials/user.html',
