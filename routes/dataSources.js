@@ -9,7 +9,7 @@ var DataSource = require('../models/dataSource.js');
 // TODO: Secure these APIs
 
 router.get('/', function(req, res) {
-    DataSource.find({})
+    DataSource.find({}, null, {sort: {name: 1}})
         .select(!req.query.updates || req.query.updates !== 'true' ?
             '-updates' :
             '')
