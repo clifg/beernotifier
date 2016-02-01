@@ -37,6 +37,7 @@ passport.use('local-signup', new LocalStrategy({
             var passwordResult = owasp.test(password);
             if (!passwordResult.strong) {
                 console.log(' ! Rejecting weak password');
+                console.dir(passwordResult);
                 return done(null, false, { message: passwordResult.errors[0] });
             }
             
@@ -47,6 +48,7 @@ passport.use('local-signup', new LocalStrategy({
 
             newUser.save(function(err) {
                 if (err) {
+                    console.dir(err);
                     throw err;
                 }
 

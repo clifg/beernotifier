@@ -78,13 +78,21 @@ app.use(function(req, res, next) {
   next();
 });
 
-app.post('/signup', passport.authenticate('local-signup', { session: false }), activator.createActivate);
+app.post('/signup', function(req, res, next) {
+  passport.authenticate('local-signup', function(err, user, info) {
+    if (err) { return next(err); }
+    if (!user) { console.dir(info); return res.status(401).send(info.message); }
+    if (!req.activator) { req.activator = {}; }
+    req.activator.id = user.id;
+    next();
+  })(req,res,next);
+}, activator.createActivate);
 app.get('/activate', activator.completeActivate);
 
 app.post('/login', function(req, res, next) {
   passport.authenticate('local-login', function(err, user, info) {
     if (err) { return next(err); }
-    if (!user) { return res.status(401).send(info.message); }
+    if (!user) { console.dir(info); return res.status(401).send(info.message); }
     req.logIn(user, function(err) {
       if (err) { return next(err); }
       return res.redirect('/');
