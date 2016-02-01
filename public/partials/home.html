@@ -1,12 +1,12 @@
 <div class="container">
-    <h1>Welcome!</h1>
-
+    <br>
     <div class="col-sm-3">
         <form>
             <div class="form-group">
+                <strong>Locations</strong> <span ng-show="filterSet">(<a ng-click="clearFilter()">clear filter</a>)</span>
                 <div class="checkbox" ng-repeat="dataSource in dataSources">
                     <label>
-                      <input type="checkbox"> {{dataSource.name}}
+                      <input type="checkbox" ng-model="dataSource.checked" ng-change="updateFilters()"> {{dataSource.name}}
                     </label>
                 </div>
             </div>
@@ -23,7 +23,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr ng-repeat="listing in activeListings">
+                <tr ng-repeat="listing in activeListings | filter:filterListings">
                     <td>{{listing.rawListing}}</td>
                     <td>{{listing.dataSource.name}}</td>
                     <td>{{listing.friendlyCreatedDate}}</td>

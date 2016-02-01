@@ -15,8 +15,46 @@ app.controller('HomeCtrl', ['$scope', '$resource', '$location', '$http',
                         return listing;
                     });
                 }); 
-            })
+            });
 
+        $scope.updateFilters = function() {
+            $scope.filterSet = false;
+            $scope.dataSources.forEach(function(source) {
+                if (source.checked && source.checked === true) {
+                    $scope.filterSet = true;
+                }
+            });
+        };
+
+        $scope.clearFilter = function() {
+            $scope.filterSet = false;
+            $scope.dataSources.forEach(function(source) {
+                if (source.checked) {
+                    source.checked = false;
+                }
+            });
+        };
+
+        $scope.filterListings = function(item) {
+            var selectedSourceIds = [];
+            $scope.dataSources.forEach(function(source) {
+                if (source.checked && source.checked === true) {
+                    selectedSourceIds.push(source._id);
+                }
+            });
+
+            if (selectedSourceIds.length === 0) {
+                return true;
+            }
+
+            for (var i = 0; i < selectedSourceIds.length; i++) {
+                if (selectedSourceIds[i] === item.dataSource._id) {
+                    return true;
+                }
+            }
+
+            return false;
+        };
     }
 ]);
 
