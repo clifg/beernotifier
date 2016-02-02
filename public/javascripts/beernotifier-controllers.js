@@ -64,43 +64,36 @@ app.controller('LocationCtrl', ['$scope', '$resource', '$location', '$http', '$r
             .success(function(dataSource) {
                 $scope.dataSource = dataSource;
 
-                // Aggregate our update timestamps by day
+                // Create buckets of dates from today, going two weeks back
+                var date = new Date();
                 var updateCounts = {};
+                for (var i = 0; i < 14; i++)
+                {
+                    updateCounts[date.toDateString()] = 0;
+                    date.setDate(date.getDate() - 1);
+                }
+
+                // Aggregate our update timestamps by day
                 dataSource.updates.forEach(function(update) {
                     var date = new Date(update);
-                    if (!updateCounts[date.toDateString()]) {
-                        updateCounts[date.toDateString()] = 1;
-                    } else {
+                    if (updateCounts.hasOwnProperty(date.toDateString())) {
                         updateCounts[date.toDateString()] = updateCounts[date.toDateString()] + 1;
                     }
                 });
 
                 var updateData = [];
+                var labels = [];
+                var data = [];
                 for (var property in updateCounts) {
                     if (updateCounts.hasOwnProperty(property)) {
-                        updateData.push({x: property, y: updateCounts[property]});
+                        labels.push(moment(property).format('MMM DD'));
+                        data.push(updateCounts[property]);
                     }
                 }
 
-                $scope.options = {
-                    scales: {
-                        xAxes: [{
-                          type: "time",
-                          time: {
-                            displayFormat: 'll'
-                          },
-                          scaleLabel: {
-                            display: true,
-                            labelString: 'Time'
-                          }
-                        }],
-                        yAxes: [{
-                          position: 'left',
-                        }]
-                    }
-                };
+                $scope.labels = labels.reverse();
+                $scope.data = [data.reverse()];
                 $scope.series = ['Updates'];
-                $scope.data = [updateData];
             });
     }
 ]);
