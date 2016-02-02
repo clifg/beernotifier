@@ -65,7 +65,7 @@ passport.use('local-login', new LocalStrategy({
     passwordField: 'password',
     passReqToCallback: true
 }, function(req, email, password, done) {
-    User.findOne({ 'local.email': email })
+    User.findOne({ 'local.email': email.toLowerCase().trim() })
         .exec(function(err, user) {
         if (err) {
             return done(err);
