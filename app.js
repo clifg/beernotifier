@@ -1,3 +1,7 @@
+if (process.env.NEW_RELIC_LICENSE_KEY) {
+    require('newrelic');
+}
+
 var express = require('express');
 var session = require('express-session');
 var path = require('path');
