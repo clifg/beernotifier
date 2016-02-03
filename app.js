@@ -47,7 +47,7 @@ activator.init({
   emailProperty: 'local.email',
   transport: transport,
   templates: __dirname + '/mailTemplates',
-  from: 'do_not_reply' + process.env.DAILYFANTASY_EMAIL_USERNAME
+  from: 'do_not_reply' + process.env.BEERNOTIFIER_EMAIL_USERNAME
 });
 
 // view engine setup
