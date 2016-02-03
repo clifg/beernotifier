@@ -14,6 +14,7 @@ You'll want to run the [mongo command line tool](https://docs.mongodb.org/manual
 
 The database needs some manually-created datasources, and there isn't any client UI for managing them yet, so you can do it by hand from the shell. This inserts all implemented datasources (TODO: Make this automated):
 ```
+use beernotifier
 db.datasources.insert(
 [{
 	"updateFrequency": 0,
