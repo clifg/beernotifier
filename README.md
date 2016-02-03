@@ -85,4 +85,11 @@ db.datasources.insert(
 ```
 Once you're set up, clone the repo to some sane location on your machine and run "npm install" to pull down all of the dependencies for the project. If you followed the Udemy tutorial, you already installed nodemon, which I **highly** recommend using. You can then just run "nodemon" from the root of the project and then point your browser to http://localhost:4000 to see the site.
 
+The account confirmation mailer is configured by using these environment variables:
+```
+BEERNOTIFIER_EMAIL_USERNAME
+BEERNOTIFIER_EMAIL_PASSWORD
+```
+For now it only supports gmail, so make a dummy gmail account for this. (Note: For now, you can also reuse the one I'm using if you want: `thejankkings@gmail.com`/`p00psocks`) For local development, if you don't want to bother, you can also just go stick an account in the "users" collection directly. Ping me if you want help doing this.
+
 Data is updated through a script that runs periodically, `bin/updateDataSources`. On the live site, this is run every 10 minutes by the Heroku scheduler. You can run it from the command line whenever you want to pull down new data from the scrapers.
