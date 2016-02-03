@@ -65,7 +65,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(session({
-  resave: true,
+  resave: false,
   saveUninitialized: true,
   secret: 'seahawkmarinersounder',
   cookie: { maxAge: 60000, expires: new Date(new Date().getTime() + 14 * 24 * 60 * 60 * 1000) },
