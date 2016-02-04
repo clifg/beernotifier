@@ -22,7 +22,7 @@ module.exports = {
                 // Check for known non-beverages
                 if ((brewery.toLowerCase().indexOf('ipa flight') != -1) ||
                     (brewery.toLowerCase().indexOf('cider flight') != -1) ||
-                    (brewery.toLowerCase().indexOf('humm') != -1)) {
+                    (beer.toLowerCase().indexOf('kombucha') != -1)) {
                     return;
                 }
 

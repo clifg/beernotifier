@@ -18,17 +18,15 @@ module.exports = {
             $('td.draft_brewery').each(function(i, element) {
                 var brewery = $(this).text();
                 var beer = $(this).nextAll('td.draft_name').text();
-
                 // Check for known non-beverages
                 if ((brewery.toLowerCase().indexOf('ipa flight') != -1) ||
                     (brewery.toLowerCase().indexOf('cider flight') != -1) ||
-                    (brewery.toLowerCase().indexOf('humm') != -1)) {
+                    (beer.toLowerCase().indexOf('kombucha') != -1)) {
                     return;
                 }
 
                 beers.push(brewery.trim() + ' ' + beer.trim());
             });
-
             return callback(null, beers);
         });
     }
