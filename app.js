@@ -13,7 +13,6 @@ var bodyParser = require('body-parser');
 var MongoStore = require('connect-mongo')(session);
 var mongoose = require('mongoose');
 var passport = require('passport');
-var flash = require('connect-flash');
 var activator = require('activator');
 var nodemailer = require('nodemailer');
 
@@ -77,7 +76,6 @@ app.use(session({
 }));
 app.use(passport.initialize());
 app.use(passport.session());
-app.use(flash());
 
 // Ensure every page has access to the current user
 app.use(function(req, res, next) {
