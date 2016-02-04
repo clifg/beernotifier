@@ -54,6 +54,10 @@ activator.init({
   from: 'do_not_reply' + process.env.BEERNOTIFIER_EMAIL_USERNAME
 });
 
+// Handle static files first, so we don't incur the session/user lookup overhead as many times.
+// Since we're currently a single-page app, we have like 8 requests just to load the homepage. :(
+app.use(express.static(path.join(__dirname, 'public')));
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
@@ -74,7 +78,6 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(flash());
-app.use(express.static(path.join(__dirname, 'public')));
 
 // Ensure every page has access to the current user
 app.use(function(req, res, next) {
