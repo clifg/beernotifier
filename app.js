@@ -71,7 +71,7 @@ app.use(session({
   resave: false,
   saveUninitialized: true,
   secret: 'seahawkmarinersounder',
-  cookie: { maxAge: 60000 },
+  cookie: { maxAge: 60000, expires: new Date(new Date().getTime() + 14 * 24 * 60 * 60 * 1000) },
   store: new MongoStore({ mongooseConnection: mongoose.connection, autoReconnect: true })
 }));
 app.use(passport.initialize());
