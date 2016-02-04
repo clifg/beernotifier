@@ -94,6 +94,13 @@ app.controller('LocationCtrl', ['$scope', '$resource', '$location', '$http', '$r
                 $scope.labels = labels.reverse();
                 $scope.data = [data.reverse()];
                 $scope.series = ['Updates'];
+                $scope.options = {
+                    scaleOverride: true,
+                    scaleStartValue: 0,
+                    scaleStepWidth: 5,
+                    scaleSteps: 4,
+                    scaleBeginsAtZero: true
+                };
             });
     }
 ]);
