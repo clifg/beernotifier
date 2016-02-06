@@ -1,12 +1,7 @@
 var express = require('express');
 var router = express.Router();
 
-var secrets = require('../config/secrets');
-var passportConf = require('../config/passport');
-
 var TapListing = require('../models/tapListing.js');
-
-// TODO: Secure these APIs
 
 router.get('/', function(req, res) {
     var queryFilter = {};

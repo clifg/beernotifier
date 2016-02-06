@@ -1,12 +1,7 @@
 var express = require('express');
 var router = express.Router();
 
-var secrets = require('../config/secrets');
-var passportConf = require('../config/passport');
-
 var DataSource = require('../models/dataSource.js');
-
-// TODO: Secure these APIs
 
 router.get('/', function(req, res) {
     DataSource.find({}, null, {sort: {name: 1}})

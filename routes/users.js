@@ -1,12 +1,7 @@
 var express = require('express');
 var router = express.Router();
 
-var secrets = require('../config/secrets');
-var passportConf = require('../config/passport');
-
 var User = require('../models/user.js');
-
-// TODO: Secure these APIs
 
 router.get('/', function(req, res) {
     User.find({}, function(err, users) {

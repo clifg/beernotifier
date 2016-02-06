@@ -18,8 +18,8 @@ var nodemailer = require('nodemailer');
 var User = require('./models/user');
 
 var secrets = require('./config/secrets');
+var passportConf = require('./config/passport');
 
-var routes = require('./routes/index');
 var users = require('./routes/users');
 var tapListings = require('./routes/tapListings');
 var dataSources = require('./routes/dataSources');
@@ -104,7 +104,6 @@ app.get('/logout', function(req, res) {
   res.sendStatus(200);
 });
 
-app.use('/', routes);
 app.use('/api/v1/users', users);
 app.get('/api/v1/login', function(req, res) {
   if (req.user) {
@@ -130,21 +129,14 @@ app.use(function(req, res, next) {
 if (app.get('env') === 'development') {
   app.use(function(err, req, res, next) {
     res.status(err.status || 500);
-    res.render('error', {
-      message: err.message,
-      error: err
-    });
+    console.dir(err);
   });
 }
 
 // production error handler
 // no stacktraces leaked to user
 app.use(function(err, req, res, next) {
-  res.status(err.status || 500);
-  res.render('error', {
-    message: err.message,
-    error: {}
-  });
+  res.sendStatus(err.status || 500);
 });
 
 
