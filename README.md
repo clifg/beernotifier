@@ -1,6 +1,8 @@
 # beernotifier
 Watch local taplists and send notifications
 
+![](https://img.shields.io/shippable/56b6dbab1895ca4474738165.svg)
+
 ## Contributing
 The site is built on the MEAN stack: MongoDB (database), ExpressJS (web service framework), AngularJS (client framework), and Node (server-side Javascript runtime environment). Here are a few tutorials I found useful when learning how this all works:
 * https://blog.udemy.com/node-js-tutorial
