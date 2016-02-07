@@ -13,5 +13,13 @@ before_install:
  - . /home/shippable/.nvm/nvm.sh && nvm install 4.2.6
  - nvm use 4.2.6 && npm config set ca ''
 
+before_script:
+ - mkdir -p shippable/testresults
+ - mkdir -p shippable/codecoverage
+
 script:
   - XUNIT_FILE=shippable/testresults/result.xml node_modules/mocha/bin/mocha -R xunit-file
+
+after_script:
+ - ./node_modules/.bin/istanbul cover ./node_modules/mocha/bin/_mocha -- -R spec
+ - ./node_modules/.bin/istanbul report cobertura --dir shippable/codecoverage 
