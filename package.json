@@ -29,6 +29,7 @@
     "request": "^2.67.0",
     "serve-favicon": "~2.3.0",
     "supertest": "^1.1.0",
-    "tabletop": "^1.4.2"
+    "tabletop": "^1.4.2",
+    "xunit-file": "0.0.9"
   }
 }

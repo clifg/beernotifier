@@ -8,7 +8,5 @@ node_js:
 services:
  - mongodb
 
-before_install:
- - mkdir -p ~/.nvm/versions
- - . /home/shippable/.nvm/nvm.sh && nvm install 4.2.6
- - nvm use 4.2.6 && npm config set ca ''
+script:
+  - XUNIT_FILE=shippable/testresults/result.xml node_modules/mocha/bin/mocha -R xunit-file
