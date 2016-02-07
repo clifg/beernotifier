@@ -1,5 +1,8 @@
 module.exports = {
-    db: process.env.MONGOLAB_URI || 'mongodb://localhost:27017/beernotifier',
+    db: {
+        production: process.env.MONGOLAB_URI || 'mongodb://localhost:27017/beernotifier',
+        test: 'mongodb://localhost:27017/beernotifier_test'
+    },
 
     facebook: {
         // Used by passport

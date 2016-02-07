@@ -26,7 +26,9 @@ var dataSources = require('./routes/dataSources');
 
 var app = express();
 
-mongoose.connect(secrets.db);
+mongoose.connect((process.env.NODE_ENV && process.env.NODE_ENV === 'test') ?
+    secrets.db.test :
+    secrets.db.production);
 
 // TODO: Use proper account for sending activation emails!
 var transport = nodemailer.createTransport({
