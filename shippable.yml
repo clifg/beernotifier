@@ -8,5 +8,8 @@ build_image: node:latest
 node_js:
  - 5
 
+services:
+ - mongodb
+
 before_script:
  - npm install
