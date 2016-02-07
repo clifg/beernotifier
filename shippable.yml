@@ -5,6 +5,9 @@ language: node_js
 node_js:
  - 4.2.6
 
+services:
+ - mongodb
+
 before_install:
  - mkdir -p ~/.nvm/versions
  - . /home/shippable/.nvm/nvm.sh && nvm install 4.2.6
