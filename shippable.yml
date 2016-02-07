@@ -12,6 +12,3 @@ before_install:
  - mkdir -p ~/.nvm/versions
  - . /home/shippable/.nvm/nvm.sh && nvm install 4.2.6
  - nvm use 4.2.6 && npm config set ca ''
-
-before_script:
- - npm install
