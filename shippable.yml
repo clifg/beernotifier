@@ -4,6 +4,9 @@ language: node_js
 # image setting
 build_image: node:latest
 
+before_install:
+ - node --version
+
 # version numbers, testing against two versions of node
 node_js:
  - 4.2.6 
