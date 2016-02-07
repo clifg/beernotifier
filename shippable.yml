@@ -1,25 +1,14 @@
 # language setting
 language: node_js
 
-# image setting
-build_image: node:latest
-
 # version numbers, testing against two versions of node
 node_js:
- - 5
+ - 4.2.6
 
 before_install:
- - mkdir -p /data/db
- - apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv EA312927
- - echo "deb http://repo.mongodb.org/apt/ubuntu trusty/mongodb-org/3.2 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-3.2.list
- - sudo apt-get update
- - sudo apt-get install -y mongodb-org
- - sudo sed -i 's/#port = 27017/port = 27017/' /etc/mongod.conf
- - sudo sed -i 's/bind_ip = 127.0.0.1/bind_ip = 0.0.0.0/' /etc/mongod.conf
- - sudo sed -i 's/# nojournal = true/nojournal = true/' /etc/mongod.conf
- - sudo sed -i 's/#noprealloc = true/noprealloc = true/' /etc/mongod.conf
- - mongod &
- - sleep 20
+ - mkdir -p ~/.nvm/versions
+ - . /home/shippable/.nvm/nvm.sh && nvm install 4.2.6
+ - nvm use 4.2.6 && npm config set ca ''
 
 before_script:
  - npm install
