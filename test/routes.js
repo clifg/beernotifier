@@ -4,20 +4,10 @@ var expect = require('chai').expect;
 var mongoose = require('mongoose');
 var MongoClient = require('mongodb').MongoClient;
 var async = require('async');
-var bcrypt = require('bcrypt-nodejs');
+var sinon = require('sinon');
+require('sinon-mongoose');
 var secrets = require('../config/secrets');
 var User = require('../models/user');
-
-function clearTestDB(done) {
-    if (process.env.NODE_ENV !== 'test') {
-        throw('Tests must be running in node test environment!');
-    }
-
-    MongoClient.connect(secrets.db.test, function(err, db) {
-        if (err) throw err;
-        db.dropDatabase(done);
-    });
-}
 
 describe('Users', function () {
     var testUsers = [
@@ -69,11 +59,23 @@ describe('Users', function () {
                 (user1.activation_code === user2.activation_code));
     }
 
+    var db = {};
+
     before(function(done) {
         this.timeout(20000);
+        if (process.env.NODE_ENV !== 'test') {
+            throw('Tests must be running in node test environment!');
+        }
         async.series([
             function(callback) {
-                clearTestDB(callback);
+                MongoClient.connect(secrets.db.test, function(err, mongo) {
+                    if (err) throw err;
+                    db = mongo;
+                    callback();
+                });
+            },
+            function(callback) {
+                db.dropDatabase(callback);
             },
             function(callback) {
                 async.each(testUsers, function(testUser, itrCallback) {
@@ -139,6 +141,23 @@ describe('Users', function () {
             .get('/api/v1/users')
             .set('Accept', 'application/json')
             .expect(401, done);
+    });
+
+    it ('should return 500 on GET / with internal database error', function(done) {
+        var UserMock = sinon.mock(User);
+        UserMock.expects('find')
+            .chain('select').withArgs('-local.password')
+            .chain('exec')
+            .yields('error');
+        adminAgent
+            .get('/api/v1/users')
+            .set('Accept', 'application/json')
+            .expect(500)
+            .end(function(err, res) {
+                UserMock.verify();
+                if (err) throw err;
+                done();
+            });
     });
 
     it ('should not return password fields on GET /', function(done) {
@@ -210,6 +229,20 @@ describe('Users', function () {
             });
     });
 
+    it ('should return 500 on GET /:id with bogus user id', function(done) {
+        adminAgent
+            .get('/api/v1/users/thisisnotanid')
+            .set('Accept', 'application/json')
+            .expect(500, done);
+    });
+
+    it ('should return 404 on GET /:id with nonexistent user id', function(done) {
+        adminAgent
+            .get('/api/v1/users/111111111170d64339e061b4')
+            .set('Accept', 'application/json')
+            .expect(404, done);
+    });
+
     it ('should return 401 on DELETE /:id by regular user', function(done) {
         userAgent
             .delete('/api/v1/users/' + testUsers[2].id)
@@ -220,6 +253,30 @@ describe('Users', function () {
         request(app)
             .delete('/api/v1/users/' + testUsers[2].id)
             .expect(401, done);
+    });
+
+    it ('should return 500 on DELETE /:id with bogus user id', function(done) {
+        adminAgent
+            .delete('/api/v1/users/thisisnotanid')
+            .expect(500, done);
+    });
+
+    it ('should return 404 on DELETE /:id with nonexistent user id', function(done) {
+        adminAgent
+            .delete('/api/v1/users/111111111170d64339e061b4')
+            .expect(404, done);
+    });
+
+    it ('should return 500 on DELETE /:id with database internal error', function(done) {
+        sinon.stub(User.prototype, 'remove').yields('error');
+        adminAgent
+            .delete('/api/v1/users/' + testUsers[2].id)
+            .expect(500)
+            .end(function(err, res) {
+                User.prototype.remove.restore();
+                if (err) throw err;
+                done();
+            });
     });
 
     it ('should delete user record on DELETE /:id by admin', function(done) {
@@ -239,6 +296,6 @@ describe('Users', function () {
 
     after(function(done) {
         this.timeout(20000);
-        clearTestDB(done);
+        db.dropDatabase(done);
     });
 });

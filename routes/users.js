@@ -10,7 +10,9 @@ router.get('/', function(req, res) {
     User.find({})
         .select('-local.password')
         .exec(function(err, users) {
-        if (err) throw err;
+        if (err) {
+            return res.sendStatus(500);
+        }
         res.json(users);
     });
 });
@@ -21,10 +23,10 @@ router.get('/:id', function(req, res) {
     }
     User.findById(req.params.id, function(err, user) {
         if (err) {
-            return res.sendStatus(404);
+            return res.sendStatus(500);
         }
 
-        return res.json(user);
+        return user ? res.json(user) : res.sendStatus(404);
     });
 });
 
@@ -34,11 +36,17 @@ router.delete('/:id', function(req, res) {
     }
     User.findById(req.params.id, function(err, user) {
         if (err) {
+            return res.sendStatus(500);
+        }
+
+        if (!user) {
             return res.sendStatus(404);
         }
 
         user.remove(function(err) {
-            if (err) throw err;
+            if (err) {
+                return res.sendStatus(500);
+            }
 
             res.sendStatus(200);
         });
