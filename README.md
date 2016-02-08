@@ -14,77 +14,9 @@ Node Note: After installing Node, you should also [update npm](https://docs.npmj
 
 You'll want to run the [mongo command line tool](https://docs.mongodb.org/manual/mongo/) to bootstrap the database. Run `mongo` and then create the database (the Udemy tutorial talks about robomongo, and that looks great and all, but doesn't work with the latest version of MongoDB so just ignore that part).
 
-The database needs some manually-created datasources, and there isn't any client UI for managing them yet, so you can do it by hand from the shell. This inserts all implemented datasources (TODO: Make this automated):
-```
-use beernotifier
-db.datasources.insert(
-[{
-	"updateFrequency": 0,
-	"homeUrl": "http://chuckscd.com",
-	"name": "Chucks Central District",
-	"scraper": "chucksCentralDistrict"
-},
-{
-	"updateFrequency": 0,
-	"homeUrl": "http://chucks85th.com",
-	"name": "Chucks Hop Shop Greenwood",
-	"scraper": "chucksGreenwood"
-},
-{
-	"updateFrequency": 0,
-	"homeUrl": "http://nakedcitybrewing.com",
-	"name": "Naked City",
-	"scraper": "nakedCity"
-},
-{
-	"updateFrequency": 0,
-	"homeUrl": "http://www.prosttavern.net",
-	"name": "Prost Tavern",
-	"scraper": "prostTavern"
-},
-{
-	"updateFrequency": 0,
-	"homeUrl": "http://www.thebarkingdogalehouse.com",
-	"name": "The Barking Dog",
-	"scraper": "theBarkingDog"
-},
-{
-	"updateFrequency": 0,
-	"homeUrl": "http://www.thedray.com",
-	"name": "The Dray",
-	"scraper": "theDray"
-},
-{
-	"updateFrequency": 0,
-	"homeUrl": "http://www.thenoblefir.com",
-	"name": "The Noble Fir",
-	"scraper": "theNobleFir"
-},
-{
-	"updateFrequency": 0,
-	"homeUrl": "http://www.pineboxbar.com",
-	"name": "The Pine Box",
-	"scraper": "thePineBox"
-},
-{
-	"updateFrequency": 0,
-	"homeUrl": "http://www.thesixgill.com",
-	"name": "The Sixgill",
-	"scraper": "theSixgill"
-},
-{
-	"updateFrequency": 0,
-	"homeUrl": "http://theyardcafe.com",
-	"name": "The Yard Cafe",
-	"scraper": "theYardCafe"
-},
-{
-	"updateFrequency": 0,
-	"homeUrl": "http://uberbier.com",
-	"name": "Uber",
-	"scraper": "uber"
-}])
-```
+The database needs some manually-created datasources, and there isn't any client UI for managing them yet, so you can do it by hand from the shell. This inserts all implemented datasources:
+```mongo < db_setup.js```
+
 Once you're set up, clone the repo to some sane location on your machine and run "npm install" to pull down all of the dependencies for the project. If you followed the Udemy tutorial, you already installed nodemon, which I **highly** recommend using. You can then just run "nodemon" from the root of the project and then point your browser to http://localhost:4000 to see the site.
 
 The account confirmation mailer is configured by using these environment variables:
