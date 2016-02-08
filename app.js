@@ -60,7 +60,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
-app.use(logger('dev'));
+if (process.env.NODE_ENV !== 'test') {
+  app.use(logger('dev'));
+}
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(session({
@@ -72,12 +74,6 @@ app.use(session({
 }));
 app.use(passport.initialize());
 app.use(passport.session());
-
-// Ensure every page has access to the current user
-app.use(function(req, res, next) {
-  res.locals.user = req.user;
-  next();
-});
 
 app.post('/signup', function(req, res, next) {
   passport.authenticate('local-signup', function(err, user, info) {
@@ -109,7 +105,9 @@ app.get('/logout', function(req, res) {
 app.use('/api/v1/users', users);
 app.get('/api/v1/login', function(req, res) {
   if (req.user) {
-    return res.json(req.user);
+    var myUser = JSON.parse(JSON.stringify(req.user));
+    delete myUser.local.password;
+    return res.json(myUser);
   }
 
   return res.sendStatus(401);
