@@ -22,7 +22,9 @@ var thePineBox = require('../scrapers/thePineBox');
 
 var async = require('async');
 
-mongoose.connect(secrets.db);
+mongoose.connect((process.env.NODE_ENV && process.env.NODE_ENV === 'test') ?
+    secrets.db.test :
+    secrets.db.production);
 
 var scrapers = {
     'chucksGreenwood': chucksGreenwood,
