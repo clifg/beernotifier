@@ -7,10 +7,4 @@ describe('server', function () {
         expect(app);
         done();
     });
-
-    it('should respond to GET /', function(done) {
-        request(app)
-            .get('/')
-            .expect(200, done);
-    });
 });

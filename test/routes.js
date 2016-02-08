@@ -70,6 +70,7 @@ describe('Users', function () {
     }
 
     before(function(done) {
+        this.timeout(20000);
         async.series([
             function(callback) {
                 clearTestDB(callback);
@@ -237,6 +238,7 @@ describe('Users', function () {
     });
 
     after(function(done) {
+        this.timeout(20000);
         clearTestDB(done);
     });
 });
