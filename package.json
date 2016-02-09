@@ -34,6 +34,7 @@
     "sinon-mongoose": "^1.2.1",
     "supertest": "^1.1.0",
     "tabletop": "^1.4.2",
+    "underscore": "^1.8.3",
     "xunit-file": "0.0.9"
   }
 }

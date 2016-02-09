@@ -6,10 +6,12 @@ var MongoClient = require('mongodb').MongoClient;
 var async = require('async');
 var sinon = require('sinon');
 require('sinon-mongoose');
+var _ = require('underscore');
 var secrets = require('../config/secrets');
 var User = require('../models/user');
+var DataSource = require('../models/dataSource');
 
-describe('Users', function () {
+describe('/users', function () {
     var testUsers = [
     {
         local: {
@@ -59,8 +61,6 @@ describe('Users', function () {
                 (user1.activation_code === user2.activation_code));
     }
 
-    var db = {};
-
     before(function(done) {
         this.timeout(20000);
         if (process.env.NODE_ENV !== 'test') {
@@ -70,7 +70,7 @@ describe('Users', function () {
             function(callback) {
                 MongoClient.connect(secrets.db.test, function(err, mongo) {
                     if (err) throw err;
-                    db = mongo;
+                    this.db = mongo;
                     callback();
                 });
             },
@@ -114,7 +114,7 @@ describe('Users', function () {
         });
     });
 
-    it ('should return all users on GET / to admin', function(done) {
+    it ('should return all users on GET /users to admin', function(done) {
         adminAgent
             .get('/api/v1/users')
             .set('Accept', 'application/json')
@@ -129,21 +129,21 @@ describe('Users', function () {
             });
     });
 
-    it ('should return 401 on GET / to regular user', function(done) {
+    it ('should return 401 on GET /users to regular user', function(done) {
         userAgent
             .get('/api/v1/users')
             .set('Accept', 'application/json')
             .expect(401, done);
     });
 
-    it ('should return 401 on GET / when not logged in', function(done) {
+    it ('should return 401 on GET /users when not logged in', function(done) {
         request(app)
             .get('/api/v1/users')
             .set('Accept', 'application/json')
             .expect(401, done);
     });
 
-    it ('should return 500 on GET / with internal database error', function(done) {
+    it ('should return 500 on GET /users with internal database error', function(done) {
         var UserMock = sinon.mock(User);
         UserMock.expects('find')
             .chain('select').withArgs('-local.password')
@@ -160,7 +160,7 @@ describe('Users', function () {
             });
     });
 
-    it ('should not return password fields on GET /', function(done) {
+    it ('should not return password fields on GET /users', function(done) {
         adminAgent
             .get('/api/v1/users')
             .set('Accept', 'application/json')
@@ -176,7 +176,7 @@ describe('Users', function () {
             });
     });
 
-    it ('should return one user on GET /:id to admin', function(done) {
+    it ('should return one user on GET /users/:id to admin', function(done) {
         adminAgent
             .get('/api/v1/users/' + testUsers[0].id)
             .set('Accept', 'application/json')
@@ -189,7 +189,7 @@ describe('Users', function () {
             });
     });
 
-    it ('should return user data for \'myself\' on GET /:id to regular user', function(done) {
+    it ('should return user data for \'myself\' on GET /users/:id to regular user', function(done) {
         userAgent
             .get('/api/v1/users/' + testUsers[1].id)
             .set('Accept', 'application/json')
@@ -202,21 +202,21 @@ describe('Users', function () {
             });
     });
 
-    it ('should return 401 on GET /:id of someone else to regular user', function(done) {
+    it ('should return 401 on GET /users/:id of someone else to regular user', function(done) {
         userAgent
             .get('/api/v1/users/' + testUsers[0].id)
             .set('Accept', 'application/json')
             .expect(401, done);
     });
 
-    it ('should return 401 on GET /:id when not logged in', function(done) {
+    it ('should return 401 on GET /users/:id when not logged in', function(done) {
         request(app)
             .get('/api/v1/users/' + testUsers[0].id)
             .set('Accept', 'application/json')
             .expect(401, done);
     });
 
-    it ('should not return password on GET /:id', function(done) {
+    it ('should not return password on GET /users/:id', function(done) {
         adminAgent
             .get('/api/v1/users/' + testUsers[0].id)
             .set('Accept', 'application/json')
@@ -229,45 +229,45 @@ describe('Users', function () {
             });
     });
 
-    it ('should return 500 on GET /:id with bogus user id', function(done) {
+    it ('should return 500 on GET /users/:id with bogus user id', function(done) {
         adminAgent
             .get('/api/v1/users/thisisnotanid')
             .set('Accept', 'application/json')
             .expect(500, done);
     });
 
-    it ('should return 404 on GET /:id with nonexistent user id', function(done) {
+    it ('should return 404 on GET /users/:id with nonexistent user id', function(done) {
         adminAgent
             .get('/api/v1/users/111111111170d64339e061b4')
             .set('Accept', 'application/json')
             .expect(404, done);
     });
 
-    it ('should return 401 on DELETE /:id by regular user', function(done) {
+    it ('should return 401 on DELETE /users/:id by regular user', function(done) {
         userAgent
             .delete('/api/v1/users/' + testUsers[2].id)
             .expect(401, done);
     });
 
-    it ('should return 401 on DELETE /:id when not logged in', function(done) {
+    it ('should return 401 on DELETE /users/:id when not logged in', function(done) {
         request(app)
             .delete('/api/v1/users/' + testUsers[2].id)
             .expect(401, done);
     });
 
-    it ('should return 500 on DELETE /:id with bogus user id', function(done) {
+    it ('should return 500 on DELETE /users/:id with bogus user id', function(done) {
         adminAgent
             .delete('/api/v1/users/thisisnotanid')
             .expect(500, done);
     });
 
-    it ('should return 404 on DELETE /:id with nonexistent user id', function(done) {
+    it ('should return 404 on DELETE /users/:id with nonexistent user id', function(done) {
         adminAgent
             .delete('/api/v1/users/111111111170d64339e061b4')
             .expect(404, done);
     });
 
-    it ('should return 500 on DELETE /:id with database internal error', function(done) {
+    it ('should return 500 on DELETE /users/:id with database internal error', function(done) {
         sinon.stub(User.prototype, 'remove').yields('error');
         adminAgent
             .delete('/api/v1/users/' + testUsers[2].id)
@@ -279,7 +279,7 @@ describe('Users', function () {
             });
     });
 
-    it ('should delete user record on DELETE /:id by admin', function(done) {
+    it ('should delete user record on DELETE /users/:id by admin', function(done) {
         adminAgent
             .delete('/api/v1/users/' + testUsers[2].id)
             .expect(200)
@@ -292,6 +292,214 @@ describe('Users', function () {
                     done();
                 });
             });
+    });
+
+    after(function(done) {
+        this.timeout(20000);
+        db.dropDatabase(done);
+    });
+});
+
+describe('/datasources', function () {
+    var testDataSources = [
+    {
+        homeUrl: "http://www.source1.com",
+        name: "Data Source 1",
+        scraper: "scraper1",
+        updates: [
+            new Date('2016-01-21T01:26:42.167Z'),
+            new Date('2016-01-21T01:36:43.319Z'),
+            new Date('2016-01-21T03:26:47.066Z')
+        ]
+    },
+    {
+        homeUrl: "http://www.source2.com",
+        name: "Data Source 2",
+        scraper: "scraper2",
+        updates: [
+            new Date('2016-01-23T14:26:52.283Z')
+        ]
+    },
+    {
+        homeUrl: "http://www.source3.com",
+        name: "Data Source 3",
+        scraper: "scraper3",
+        updates: []
+    }];
+
+    function addTestDataSource(dataSource, callback) {
+        var newDataSource = new DataSource();
+        newDataSource.homeUrl = dataSource.homeUrl;
+        newDataSource.name = dataSource.name;
+        newDataSource.scraper = dataSource.scraper;
+        newDataSource.updates = dataSource.updates.slice(0);
+
+        newDataSource.save(function(err) {
+            if (err) throw err;
+            dataSource.id = newDataSource.id;
+            callback();
+        });
+    }
+
+    function dataSourcesAreEqual(source1, source2, withUpdates) {
+        return ((source1.homeUrl === source2.homeUrl) &&
+                (source1.name === source2.name) &&
+                withUpdates ? _.isEqual(source1.updates, source2.updates):true);
+    }
+
+    before(function(done) {
+        this.timeout(20000);
+        if (process.env.NODE_ENV !== 'test') {
+            throw('Tests must be running in node test environment!');
+        }
+        async.series([
+            function(callback) {
+                MongoClient.connect(secrets.db.test, function(err, mongo) {
+                    if (err) throw err;
+                    this.db = mongo;
+                    callback();
+                });
+            },
+            function(callback) {
+                db.dropDatabase(callback);
+            },
+            function(callback) {
+                async.each(testDataSources, function(testDataSource, itrCallback) {
+                    addTestDataSource(testDataSource, itrCallback);
+                }, function(err) {
+                    if (err) throw err;
+                    callback();
+                });
+            },
+        ],
+        function(err) {
+            if (err) {
+                throw(err);
+            }
+            done();
+        });
+    });
+
+    it ('should return all datasources on GET /datasources', function(done) {
+        request(app)
+            .get('/api/v1/datasources')
+            .set('Accept', 'application/json')
+            .expect(200)
+            .end(function(err, res) {
+                if (err) throw err;
+                expect(res.body.length).to.equal(testDataSources.length);
+                for (var i = 0; i < res.body.length; i++) {
+                    expect(dataSourcesAreEqual(res.body[i], testDataSources[i], false));
+                }
+                done();
+            });
+    });
+
+    it ('should not return any updates array on GET /datasources', function(done) {
+        request(app)
+            .get('/api/v1/datasources')
+            .set('Accept', 'application/json')
+            .expect(200)
+            .end(function(err, res) {
+                if (err) throw err;
+                expect(Array.isArray(res.body)).to.be.true;
+                for (var i = 0; i < res.body.length; i++) {
+                    expect(res.body[i].updates).to.be.undefined;
+                }
+                done();
+            });
+    });
+
+    it ('should return updates array on GET /datasources?updates=true', function(done) {
+        request(app)
+            .get('/api/v1/datasources?updates=true')
+            .set('Accept', 'application/json')
+            .expect(200)
+            .end(function(err, res) {
+                if (err) throw err;
+                expect(Array.isArray(res.body)).to.be.true;
+                for (var i = 0; i < res.body.length; i++) {
+                    expect(dataSourcesAreEqual(res.body[i], testDataSources[i], true));
+                }
+                done();
+            });
+    });
+
+    it ('should not return updates array on GET /datasources?updates=<something_other_than_true>', function(done) {
+        async.parallel([
+            function(callback) {
+                request(app)
+                    .get('/api/v1/datasources?updates=false')
+                    .set('Accept', 'application/json')
+                    .expect(200)
+                    .end(function(err, res) {
+                        if (err) throw err;
+                        expect(Array.isArray(res.body)).to.be.true;
+                        expect(res.body.updates).to.be.undefined;
+                        callback();
+                    });
+            },
+            function(callback) {
+                request(app)
+                    .get('/api/v1/datasources?updates=blahblah')
+                    .set('Accept', 'application/json')
+                    .expect(200)
+                    .end(function(err, res) {
+                        if (err) throw err;
+                        expect(Array.isArray(res.body)).to.be.true;
+                        expect(res.body.updates).to.be.undefined;
+                        callback();
+                    });
+            }
+        ],
+        function(err) {
+            if (err) throw err;
+            done();
+        });
+    });
+
+    it ('should return a single datasource on GET /datasources/:id', function(done) {
+        request(app)
+            .get('/api/v1/datasources/' + testDataSources[1].id)
+            .set('Accept', 'application/json')
+            .expect(200)
+            .end(function(err, res) {
+                if (err) throw err;
+                expect(Array.isArray(res.body)).to.be.false;
+                expect(dataSourcesAreEqual(res.body, testDataSources[1], false));
+                done();
+            });
+    });
+
+    it ('should return 500 on GET /datasources with internal database error', function(done) {
+        var DataSourceMock = sinon.mock(DataSource);
+        DataSourceMock.expects('find')
+            .chain('select').withArgs('-updates')
+            .chain('exec')
+            .yields('error');
+        request(app)
+            .get('/api/v1/datasources')
+            .set('Accept', 'application/json')
+            .expect(500)
+            .end(function(err, res) {
+                DataSourceMock.verify();
+                if (err) throw err;
+                done();
+            });
+    });
+
+    it ('should return 500 on GET /datasources/:id with a bogus id', function(done) {
+        request(app)
+            .get('/api/v1/datasources/thisisnotanid')
+            .set('Accept', 'application/json')
+            .expect(500, done);
+    });
+
+    it ('shoule return 404 on GET /datasources/:id with a non-existent id', function(done) {
+        request(app)
+            .get('/api/v1/datasources/11111111111111903f138bf4')
+            .set('Accept', 'application/json')
+            .expect(404, done);
     });
 
     after(function(done) {

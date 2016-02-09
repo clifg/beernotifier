@@ -10,8 +10,7 @@ router.get('/', function(req, res) {
             '')
         .exec(function(err, dataSources) {
         if (err) {
-            console.dir(err);
-            throw err;
+            return res.sendStatus(500);
         }
         res.json(dataSources);
     });
@@ -21,9 +20,13 @@ router.get('/:id', function(req, res) {
     DataSource.findById(req.params.id)
         .exec(function(err, dataSource) {
         if (err) {
-            console.dir(err);
-            throw err;
+            return res.sendStatus(500);
         }
+
+        if (!dataSource) {
+            return res.sendStatus(404);
+        }
+
         res.json(dataSource);
     });
 });
