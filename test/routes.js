@@ -10,6 +10,7 @@ var _ = require('underscore');
 var secrets = require('../config/secrets');
 var User = require('../models/user');
 var DataSource = require('../models/dataSource');
+var TapListing = require('../models/tapListing');
 
 describe('/users', function () {
     var testUsers = [
@@ -387,6 +388,7 @@ describe('/datasources', function () {
             .expect(200)
             .end(function(err, res) {
                 if (err) throw err;
+                expect(Array.isArray(res.body)).to.be.true;
                 expect(res.body.length).to.equal(testDataSources.length);
                 for (var i = 0; i < res.body.length; i++) {
                     expect(dataSourcesAreEqual(res.body[i], testDataSources[i], false));
@@ -426,36 +428,29 @@ describe('/datasources', function () {
     });
 
     it ('should not return updates array on GET /datasources?updates=<something_other_than_true>', function(done) {
-        async.parallel([
-            function(callback) {
-                request(app)
-                    .get('/api/v1/datasources?updates=false')
-                    .set('Accept', 'application/json')
-                    .expect(200)
-                    .end(function(err, res) {
-                        if (err) throw err;
-                        expect(Array.isArray(res.body)).to.be.true;
-                        expect(res.body.updates).to.be.undefined;
-                        callback();
-                    });
+        var urls = [
+            '/api/v1/datasources?updates=false',
+            '/api/v1/datasources?updates=blahblah',
+            '/api/v1/datasources?updates='
+        ];
+
+        async.each(urls, function(url, callback) {
+            request(app)
+                .get(url)
+                .set('Accept', 'application/json')
+                .expect(200)
+                .end(function(err, res) {
+                    if (err) throw err;
+                    expect(Array.isArray(res.body)).to.be.true;
+                    expect(res.body.updates).to.be.undefined;
+                    callback();
+                });
             },
-            function(callback) {
-                request(app)
-                    .get('/api/v1/datasources?updates=blahblah')
-                    .set('Accept', 'application/json')
-                    .expect(200)
-                    .end(function(err, res) {
-                        if (err) throw err;
-                        expect(Array.isArray(res.body)).to.be.true;
-                        expect(res.body.updates).to.be.undefined;
-                        callback();
-                    });
+            function(err) {
+                if (err) throw err;
+                done();
             }
-        ],
-        function(err) {
-            if (err) throw err;
-            done();
-        });
+        );
     });
 
     it ('should return a single datasource on GET /datasources/:id', function(done) {
@@ -500,6 +495,203 @@ describe('/datasources', function () {
             .get('/api/v1/datasources/11111111111111903f138bf4')
             .set('Accept', 'application/json')
             .expect(404, done);
+    });
+
+    after(function(done) {
+        this.timeout(20000);
+        db.dropDatabase(done);
+    });
+});
+
+describe('/taplistings', function () {
+    // These are in reverse order of createdDate right now, so the tests are happy. We
+    // should probably sort these if the dataset gets much larger or more complicated.
+    var testTapListings = [
+    {
+        isActive: true,
+        createdDate: new Date('2016-02-09T06:06:40.071Z'),
+        rawListing: 'Beer Number 1'
+    },
+    {
+        isActive: true,
+        createdDate: new Date('2016-02-08T11:42:49.123Z'),
+        rawListing: 'Beer Number 2'
+    },
+    {
+        isActive: false,
+        createdDate: new Date('2016-01-30T18:46:42.444Z'),
+        removedDate: new Date('2016-02-09T04:02:13.832Z'),
+        rawListing: 'Beer Number 3'
+    },
+    {
+        isActive: false,
+        createdDate: new Date('2016-01-03T03:33:22.777Z'),
+        removedDate: new Date('2016-01-18T13:55:44.222Z'),
+        rawListing: 'Beer Number 4'
+    }];
+
+    var testDataSource = {
+        name: 'Test Data Source',
+        homeUrl: 'http://testdatasource.com',
+        scraper: 'testDataSource'
+    };
+
+    function addTestDataSource(dataSource, callback) {
+        var testDataSource = new DataSource();
+        testDataSource.name = dataSource.name;
+        testDataSource.homeUrl = dataSource.homeUrl;
+        testDataSource.scraper = dataSource.scraper;
+
+        testDataSource.save(function(err) {
+            if (err) throw err;
+            dataSource.id = testDataSource.id;
+            for (var i = 0; i < testTapListings.length; i++) {
+                testTapListings[i].dataSource = {
+                    id: testDataSource.id,
+                    name: testDataSource.name
+                };
+            }
+            callback();
+        });
+    }
+
+    function addTestTapListing(tapListing, testDataSource, callback) {
+        var newTapListing = new TapListing();
+        newTapListing.isActive = tapListing.isActive;
+        newTapListing.createdDate = tapListing.createdDate;
+        if (tapListing.removedDate) { newTapListing.removedDate = tapListing.removedDate; }
+        newTapListing.dataSource = { _id: testDataSource.id };
+        newTapListing.rawListing = tapListing.rawListing;
+
+        newTapListing.save(function(err) {
+            if (err) throw err;
+            tapListing.id = newTapListing.id;
+            callback();
+        });
+    }
+
+    function tapListingsAreEqual(tapListing1, tapListing2) {
+        return ((tapListing1.isActive === tapListing2.isActive) &&
+                (tapListing1.createdDate === tapListing2.createdDate) &&
+                ((!tapListing.isActive) ? (tapListing1.removedDate === tapListing2.removedDate) : true) &&
+                _.isEqual(tapListing1.dataSource, tapListing2.dataSource) &&
+                (tapListing1.rawListing === tapListing2.rawListing));
+    }
+
+    before(function(done) {
+        this.timeout(20000);
+        if (process.env.NODE_ENV !== 'test') {
+            throw('Tests must be running in node test environment!');
+        }
+        async.series([
+            function(callback) {
+                MongoClient.connect(secrets.db.test, function(err, mongo) {
+                    if (err) throw err;
+                    this.db = mongo;
+                    callback();
+                });
+            },
+            function(callback) {
+                db.dropDatabase(callback);
+            },
+            function(callback) {
+                addTestDataSource(testDataSource, callback);
+            },
+            function(callback) {
+                async.each(testTapListings, function(testTapListing, itrCallback) {
+                    addTestTapListing(testTapListing, testDataSource, itrCallback);
+                }, function(err) {
+                    if (err) throw err;
+                    callback();
+                });
+            },
+        ],
+        function(err) {
+            if (err) {
+                throw(err);
+            }
+            done();
+        });
+    });
+
+    it ('should return all listings on GET /taplistings', function(done) {
+        request(app)
+            .get('/api/v1/taplistings')
+            .set('Accept', 'application/json')
+            .expect(200)
+            .end(function(err, res) {
+                if (err) throw err;
+                expect(Array.isArray(res.body)).to.be.true;
+                expect(res.body.length).to.equal(testTapListings.length);
+                for(var i = 0; i < res.body.length; i++)
+                {
+                    expect(tapListingsAreEqual(res.body[i], testTapListings[i]));
+                }
+                done();
+            });
+    });
+
+    it ('should return only active listings on GET /taplistings?active=true', function(done) {
+        request(app)
+            .get('/api/v1/taplistings?active=true')
+            .set('Accept', 'application/json')
+            .expect(200)
+            .end(function(err, res) {
+                if (err) throw err;
+                expect(Array.isArray(res.body)).to.be.true;
+                var activeTapListings = testTapListings.filter(function(listing) {
+                    return listing.isActive;
+                });
+                expect(res.body.length).to.equal(activeTapListings.length);
+                for(var i = 0; i < res.body.length; i++)
+                {
+                    expect(tapListingsAreEqual(res.body[i], activeTapListings[i]));
+                }
+                done();
+            });
+    });
+
+    it ('should ignore query param on GET /taplistings?active=<something_other_than_true>', function(done) {
+        var urls = [
+            '/api/v1/taplistings?active=false',
+            '/api/v1/taplistings?active=foobar',
+            '/api/v1/taplistings?active='
+        ];
+
+        async.each(urls, function(url, callback) {
+            request(app)
+                .get(url)
+                .set('Accept', 'application/json')
+                .expect(200)
+                .end(function(err, res) {
+                    if (err) throw err;
+                    expect(Array.isArray(res.body)).to.be.true;
+                    expect(res.body.length).to.equal(testTapListings.length);
+                    callback();
+                });
+            },
+            function(err) {
+                if (err) throw err;
+                done();
+            }
+        );
+    });
+
+    it ('should return 500 on GET /taplistings with internal database error', function(done) {
+        var TapListingMock = sinon.mock(TapListing);
+        TapListingMock.expects('find')
+            .chain('populate')
+            .chain('exec')
+            .yields('error');
+        request(app)
+            .get('/api/v1/taplistings')
+            .set('Accept', 'application/json')
+            .expect(500)
+            .end(function(err, res) {
+                TapListingMock.verify();
+                if (err) throw err;
+                done();
+            });
     });
 
     after(function(done) {

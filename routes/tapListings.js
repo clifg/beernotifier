@@ -6,16 +6,15 @@ var TapListing = require('../models/tapListing.js');
 router.get('/', function(req, res) {
     var queryFilter = {};
 
-    if (req.query.active) {
-        queryFilter = { isActive: req.query.active === 'true' };
+    if (req.query.active && (req.query.active === 'true')) {
+        queryFilter = { isActive: true };
     }
 
     TapListing.find(queryFilter, null, {sort: {createdDate: -1}})
         .populate('dataSource', 'name')
         .exec(function(err, tapListings) {
         if (err) {
-            console.dir(err);
-            throw err;
+            return res.sendStatus(500);
         }
         res.json(tapListings);
     });
