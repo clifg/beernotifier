@@ -28,5 +28,8 @@ For now it only supports gmail, so make a dummy gmail account for this. For loca
 
 Data is updated through a script that runs periodically, `bin/updateDataSources`. On the live site, this is run every 10 minutes by the Heroku scheduler. You can run it from the command line whenever you want to pull down new data from the scrapers.
 
-## Code Coverage
+## Running Tests
+`npm test`
+
+### Code Coverage
 Code coverage is run with every continuous integration build, on each checkin. If you want to see the coverage stats locally, you can run `. code_cov.sh` from the root of the project. This will create a coverage report at `shippable/codecoverage/cobertura-coverage.xml`.
