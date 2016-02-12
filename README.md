@@ -32,4 +32,4 @@ Data is updated through a script that runs periodically, `bin/updateDataSources`
 `npm test`
 
 ### Code Coverage
-Code coverage is run with every continuous integration build, on each checkin. If you want to see the coverage stats locally, you can run `. code_cov.sh` from the root of the project. This will create a coverage report at `shippable/codecoverage/cobertura-coverage.xml`.
+Code coverage is run with every continuous integration build, on each checkin. If you want to see the coverage stats locally, you can run `npm run codecov`. This will create a coverage report at `shippable/codecoverage/cobertura-coverage.xml`.
