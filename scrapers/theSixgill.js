@@ -3,7 +3,7 @@ var cheerio = require('cheerio');
 
 module.exports = {
     scrapeSite: function(callback) {
-        request('http://thesixgill.com/beer-cider.html', function(err, res, body) {
+        request('http://thesixgill.com/tap-list', function(err, res, body) {
             if (err) {
                 return callback(err);
             }
