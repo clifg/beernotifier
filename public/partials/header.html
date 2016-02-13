@@ -21,7 +21,7 @@
         <li class="dropdown">
           <a class="dropdown-toggle" data-toggle="dropdown">
             <img class="img-circle" ng-src="{{user.profile.picture ? user.profile.picture : null}}" ng-show="user.profile.picture"/>
-            {{user.local.email}}
+            {{ user.profile.firstName ? 'Hi, ' + user.profile.firstName : user.email }}
             <i class="caret"></i>
           </a>
           <ul class="dropdown-menu">

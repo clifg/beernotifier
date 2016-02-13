@@ -4,15 +4,24 @@ var bcrypt = require('bcrypt-nodejs');
 var Schema = mongoose.Schema;
 
 var userSchema = new Schema({
-    local: {
-        email: { type: String, lowercase: true, unique: true, trim: true, required: true },
-        password: { type: String, required: true }
-    },
+    email: { type: String, lowercase: true, unique: true, trim: true, required: true },
+    password: { type: String },
 
+    facebookId: String,
+    tokens: Array,
+
+    profile: {
+        firstName: { type: String, trim: true, default: '' },
+        lastName: { type: String, trim: true, default: '' },
+        zipCode: { type: String, trim: true, default: '' },
+        gender: { type: String, trim: true, default: '' },
+        picture: { type: String, default: '' }
+    },
+    
     isAdmin: { type: Boolean, default: false },
-    activation_code: String,
-    password_reset_code: String,
-    password_reset_time: Date
+
+    resetPasswordToken: String,
+    resetPasswordExpires: Date,
 });
 
 userSchema.methods.generateHash = function(password) {
@@ -20,7 +29,7 @@ userSchema.methods.generateHash = function(password) {
 };
 
 userSchema.methods.validPassword = function(password) {
-    return bcrypt.compareSync(password, this.local.password);
+    return bcrypt.compareSync(password, this.password);
 }
 
 var User = mongoose.model('User', userSchema);

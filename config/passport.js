@@ -22,7 +22,7 @@ passport.use('local-signup', new LocalStrategy({
     passwordField: 'password',
     passReqToCallback: true
 }, function(req, email, password, done) {
-    User.findOne({ 'local.email': email })
+    User.findOne({ 'email': email })
         .exec(function(err, user) {
         if (err) {
             console.log(' ! Database error finding user for email ' + email);
@@ -41,8 +41,12 @@ passport.use('local-signup', new LocalStrategy({
             
             var newUser = new User();
 
-            newUser.local.email = email;
-            newUser.local.password = newUser.generateHash(password);
+            newUser.email = email;
+            newUser.password = newUser.generateHash(password);
+            newUser.profile.firstName = req.body.firstName;
+            newUser.profile.lastName = req.body.lastName;
+            newUser.profile.zipCode = req.body.zipCode;
+            newUser.profile.gender = req.body.gender;
 
             newUser.save(function(err) {
                 if (err) {
@@ -50,7 +54,7 @@ passport.use('local-signup', new LocalStrategy({
                     throw err;
                 }
 
-                newUser.local.password = undefined;
+                newUser.password = undefined;
 
                 return done(null, newUser);
             });
@@ -63,7 +67,7 @@ passport.use('local-login', new LocalStrategy({
     passwordField: 'password',
     passReqToCallback: true
 }, function(req, email, password, done) {
-    User.findOne({ 'local.email': email.toLowerCase().trim() })
+    User.findOne({ 'email': email.toLowerCase().trim() })
         .exec(function(err, user) {
         if (err) {
             return done(err);
@@ -77,11 +81,6 @@ passport.use('local-login', new LocalStrategy({
         if (!user.validPassword(password)) {
             console.log('AUTH: Invalid password');
             return done(null, false, { message: 'Invalid password.'});
-        }
-
-        if (!user.activation_code || (user.activation_code !== 'X')) {
-            console.log('AUTH: User not yet activated');
-            return done(null, false, { message: 'Email address not yet confirmed. Please check your email and click the link.'});
         }
 
         return done(null, user);

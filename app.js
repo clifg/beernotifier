@@ -12,7 +12,6 @@ var bodyParser = require('body-parser');
 var MongoStore = require('connect-mongo')(session);
 var mongoose = require('mongoose');
 var passport = require('passport');
-var activator = require('activator');
 var nodemailer = require('nodemailer');
 
 var User = require('./models/user');
@@ -37,21 +36,6 @@ var transport = nodemailer.createTransport({
       user: process.env.BEERNOTIFIER_EMAIL_USERNAME,
       pass: process.env.BEERNOTIFIER_EMAIL_PASSWORD
   }
-});
-
-activator.init({
-  user: {
-    find: function(login, callback) {
-      User.findById(login, callback);
-    },
-    save: function(id, data, callback) {
-      User.findByIdAndUpdate(id, { $set: data }, callback);
-    }
-  },
-  emailProperty: 'local.email',
-  transport: transport,
-  templates: __dirname + '/mailTemplates',
-  from: 'do_not_reply' + process.env.BEERNOTIFIER_EMAIL_USERNAME
 });
 
 // Handle static files first, so we don't incur the session/user lookup overhead as many times.
@@ -79,12 +63,12 @@ app.post('/signup', function(req, res, next) {
   passport.authenticate('local-signup', function(err, user, info) {
     if (err) { return next(err); }
     if (!user) { console.dir(info); return res.status(401).send(info.message); }
-    if (!req.activator) { req.activator = {}; }
-    req.activator.id = user.id;
-    next();
+    req.logIn(user, function(err) {
+      if (err) { return next(err); }
+      return res.redirect('/');
+    });
   })(req,res,next);
-}, activator.createActivate);
-app.get('/activate', activator.completeActivate);
+});
 
 app.post('/login', function(req, res, next) {
   passport.authenticate('local-login', function(err, user, info) {
@@ -106,7 +90,7 @@ app.use('/api/v1/users', users);
 app.get('/api/v1/login', function(req, res) {
   if (req.user) {
     var myUser = JSON.parse(JSON.stringify(req.user));
-    delete myUser.local.password;
+    delete myUser.password;
     return res.json(myUser);
   }
 

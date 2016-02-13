@@ -132,16 +132,36 @@ app.controller('LoginCtrl', ['$scope', '$rootScope', '$http', '$location',
     }
 ]);
 
-app.controller('SignupCtrl', ['$scope', '$http', '$location', 
-    function($scope, $http, $location) {
+app.controller('SignupCtrl', ['$scope', '$http', '$location', '$document',
+    function($scope, $http, $location, $document) {
         $scope.alerts = [];
 
-        $scope.signup = function(email, password) {
+        $scope.signup = function(name, email, password, confirmPassword) {
+            if(!document.getElementById('signup-form').checkValidity()) {
+                // Browser-based HTML5 form validation will alert the user.
+                return;
+            }
+
             $scope.alerts = [];
-            $http.post('/signup', { email: email, password: password })
+            if ($scope.password !== $scope.confirmPassword) {
+                addAlert('Passwords do not match', 'warning');
+                return;
+            }
+
+            if (!$scope.gender) {
+                addAlert('Please specify gender (or select \"I\'d rather not say\"', 'warning');
+                return;
+            }
+
+            $http.post('/signup', { 
+                firstName: $scope.firstName,
+                lastName: $scope.lastName,
+                email: $scope.email,
+                zipCode: $scope.zipCode,
+                gender: $scope.gender,
+                password: $scope.password })
                 .then(function(response) {
-                    //$location.path('/');
-                    addAlert('A confirmation email has been sent to ' + email + '. Once you have confirmed your address, you can log in');
+                    $location.path('/');
                 }, function(response) {
                     console.dir(response);
                     addAlert(response.data, 'warning');
@@ -170,7 +190,7 @@ app.controller('LogoutCtrl', ['$scope', '$rootScope', '$http', '$location',
 }]);
 
 app.controller('UserCtrl', ['$scope', '$resource', '$location', '$routeParams',
-    function($scope, $resource, $location, $routeParams) {        
+    function($scope, $resource, $location, $routeParams) {
     }
 ]);
 

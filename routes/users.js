@@ -8,7 +8,7 @@ router.get('/', function(req, res) {
         return res.sendStatus(401);
     }
     User.find({})
-        .select('-local.password')
+        .select('-password')
         .exec(function(err, users) {
         if (err) {
             return res.sendStatus(500);

@@ -15,28 +15,19 @@ var TapListing = require('../models/tapListing');
 describe('/users', function () {
     var testUsers = [
     {
-        local: {
-            email: 'test1@email.com',
-            password: 'plaintextpass1'
-        },
-        isAdmin: true,
-        activation_code: 'X'
+        email: 'test1@email.com',
+        password: 'plaintextpass1',
+        isAdmin: true
     },
     {
-        local: {
-            email: 'test2@email.com',
-            password: 'plaintextpass2'
-        },
-        isAdmin: false,
-        activation_code: 'X'
+        email: 'test2@email.com',
+        password: 'plaintextpass2',
+        isAdmin: false
     },
     {
-        local: {
-            email: 'test3@email.com',
-            password: 'plaintextpass3'
-        },
-        isAdmin: false,
-        activation_code: 'X'
+        email: 'test3@email.com',
+        password: 'plaintextpass3',
+        isAdmin: false
     }];
 
     var adminAgent = request.agent(app);
@@ -44,10 +35,9 @@ describe('/users', function () {
 
     function addTestUser(user, callback) {
         var newUser = new User();
-        newUser.local.email = user.local.email;
-        newUser.local.password = newUser.generateHash(user.local.password);
+        newUser.email = user.email;
+        newUser.password = newUser.generateHash(user.password);
         newUser.isAdmin = user.isAdmin;
-        newUser.activation_code = user.activation_code;
 
         newUser.save(function(err) {
             if (err) throw err;
@@ -57,9 +47,8 @@ describe('/users', function () {
     }
 
     function usersAreEqual(user1, user2) {
-        return ((user1.local.email === user2.local.email) &&
-                (user1.isAdmin === user2.isAdmin) &&
-                (user1.activation_code === user2.activation_code));
+        return ((user1.email === user2.email) &&
+                (user1.isAdmin === user2.isAdmin));
     }
 
     before(function(done) {
@@ -89,7 +78,7 @@ describe('/users', function () {
             function(callback) {
                 adminAgent
                     .post('/login')
-                    .send({email: testUsers[0].local.email, password: testUsers[0].local.password})
+                    .send({email: testUsers[0].email, password: testUsers[0].password})
                     .expect(302)
                     .end(function(err, res) {
                         if (err) throw err;
@@ -99,7 +88,7 @@ describe('/users', function () {
             function(callback) {
                 userAgent
                     .post('/login')
-                    .send({email: testUsers[1].local.email, password: testUsers[1].local.password})
+                    .send({email: testUsers[1].email, password: testUsers[1].password})
                     .expect(302)
                     .end(function(err, res) {
                         if (err) throw err;
@@ -147,7 +136,7 @@ describe('/users', function () {
     it ('should return 500 on GET /users with internal database error', function(done) {
         var UserMock = sinon.mock(User);
         UserMock.expects('find')
-            .chain('select').withArgs('-local.password')
+            .chain('select').withArgs('-password')
             .chain('exec')
             .yields('error');
         adminAgent
@@ -171,7 +160,7 @@ describe('/users', function () {
                 expect(res.body.length).to.equal(testUsers.length);
                 for (var i = 0; i < res.body.length; i++)
                 {
-                    expect(res.body[i].local.password === undefined);
+                    expect(res.body[i].password === undefined);
                 }
                 done();
             });
@@ -225,7 +214,7 @@ describe('/users', function () {
             .end(function(err, res) {
                 if (err) throw err;
                 expect(Array.isArray(res.body)).to.be.false;
-                expect(res.body.local.password === undefined);
+                expect(res.body.password === undefined);
                 done();
             });
     });
