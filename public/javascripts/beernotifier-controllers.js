@@ -132,8 +132,8 @@ app.controller('LoginCtrl', ['$scope', '$rootScope', '$http', '$location',
     }
 ]);
 
-app.controller('SignupCtrl', ['$scope', '$http', '$location', '$document',
-    function($scope, $http, $location, $document) {
+app.controller('SignupCtrl', ['$scope', '$http', '$location',
+    function($scope, $http, $location) {
         $scope.alerts = [];
 
         $scope.signup = function(name, email, password, confirmPassword) {
