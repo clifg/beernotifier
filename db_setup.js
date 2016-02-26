@@ -54,4 +54,9 @@ db.datasources.insert(
     "homeUrl": "http://uberbier.com",
     "name": "Uber",
     "scraper": "uber"
+},
+{
+    "homeUrl" : "http://www.toronadoseattle.com/",
+    "name" : "Toronado Seattle",
+    "scraper" : "toronadoSeattle"
 }])
