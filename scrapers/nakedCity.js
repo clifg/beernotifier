@@ -1,22 +1,19 @@
-var request = require('request');
+var browser = require('zombie');
 var cheerio = require('cheerio');
 
 module.exports = {
     scrapeSite: function(callback) {
-        request('https://nakedcitybrewing.com/beer/tap-list', function(err, res, body) {
+        // Naked City uses the meteor framework, so we have to actually render the page (sucks)
+        browser.visit('https://drink.nakedcity.beer/menus', function(err, browser) {
             if (err) {
                 return callback(err);
             }
 
-            if (res.statusCode != 200) {
-                return callback('Failed to fetch page. Status code: ' + res.statusCode);
-            }
-
-            $ = cheerio.load(body);
+            $ = cheerio.load(browser.html());
 
             var beers = [];
-            $('span.views-field-field-beer').each(function(i, element) {
-                beers.push($(this).children('span.field-content').children('a').text());
+            $('#beerMenu').find($('.col b')).each(function(i, element) {
+                beers.push($(this).text());
             });
 
             return callback(null, beers);
