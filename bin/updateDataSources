@@ -2,6 +2,7 @@
 
 var secrets = require('../config/secrets');
 var mongoose = require('mongoose');
+var Slack = require('slack-node');
 
 // Data Models
 var DataSource = require('../models/dataSource');
@@ -42,6 +43,64 @@ var scrapers = {
     'toronadoSeattle': toronadoSeattle
 };
 
+var slack = new Slack();
+slack.setWebhook(secrets.slack.scraperFailureWebhook.uri);
+
+function sendSlackScraperStatusMessage(message, done) {
+    slack.webhook({
+        channel: secrets.slack.scraperFailureWebhook.channel || '#general',
+        username: 'scraper-failure-bot',
+        text: message
+    }, function(err, response) {
+        if (err) {
+            console.log('ERROR: Failed to send Slack webhook message (' + err + ')');
+        }
+        return done();
+    });
+};
+
+function handleScraperFailure(err, dataSource, done) {
+    console.log(err.message);
+    if (err.err) {
+        console.dir(err.err);
+    }
+
+    if (!dataSource.scraperStatus || dataSource.scraperStatus === 'ok') {
+        console.log('Setting ' + dataSource.name + ' scraper status to \'failed\' and pinging Slack!');
+        dataSource.scraperStatus = 'failed';
+        dataSource.save(function(dberr) {
+            if (dberr) {
+                console.log('ERROR: Failed to update datasource record for ' + dataSource.name);
+            }
+            var slackMessage = 'Scraper failure for datasource \'' + dataSource.name + '\'\n' + 
+                err.message;
+            
+            if (err.err) {
+                slackMessage += '\n' + err.err;
+            }
+            
+            return sendSlackScraperStatusMessage(slackMessage, done);
+        });
+    } else {
+        return done();
+    }
+};
+
+function handleScraperSuccess(dataSource, done) {
+    if (dataSource.scraperStatus && dataSource.scraperStatus !== 'ok') {
+        console.log('Setting ' + dataSource.name + ' scraper status to \'ok\' and pinging Slack!');
+        dataSource.scraperStatus = 'ok';
+        dataSource.save(function(err) {
+            if (err) {
+                console.log('ERROR: Failed to update datasource record for ' + dataSource.name);
+            }
+            return sendSlackScraperStatusMessage('Scraper failure RESOLVED for datasource \'' + dataSource.name + '\'', done);
+        });
+    } else {
+        return done();
+    }
+};
+
 function scrapeDataSources(callback) {
     DataSource.find({}, function(err, dataSources) {
         if (err) {
@@ -55,18 +114,26 @@ function scrapeDataSources(callback) {
             var scraper = scrapers[dataSource.scraper];
             scraper.scrapeSite(function(err, beers) {
                 if (err) {
-                    console.log('ERROR: Failed to scrape ' + dataSource.name);
-                    console.dir(err);
-                    return itrCallback();
+                    var scraperErr = {
+                        message: 'ERROR: Failed to scrape ' + dataSource.name,
+                        err: err
+                    };
                 }
 
-                if (beers.length == 0) {
+                if (!err && (!beers || beers.length == 0)) {
                     // If we didn't get *any* beers, then something probably went wrong
-                    console.log('ERROR: Found no beers at ' + dataSource.name);
-                    return itrCallback();
+                    var scraperErr = {
+                        message: 'ERROR: Found no beers at ' + dataSource.name
+                    };
                 }
 
-                storeBeers(dataSource, beers, itrCallback);
+                if (scraperErr) {
+                    return handleScraperFailure(scraperErr, dataSource, itrCallback);
+                } else {
+                    handleScraperSuccess(dataSource, function() { 
+                        storeBeers(dataSource, beers, itrCallback);
+                    });
+                }
             });
         }, function(err) {
             console.log('Finished updating data sources');

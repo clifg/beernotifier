@@ -14,5 +14,12 @@ module.exports = {
 
         // Used by our code
         adminFacebookId: process.env.BEERNOTIFIER_ADMIN_FACEBOOK_ID
+    },
+
+    slack: {
+        scraperFailureWebhook: {
+            uri: process.env.BEERNOTIFIER_SLACK_SCRAPERFAILUREWEBHOOK_URI,
+            channel: process.env.BEERNOTIFIER_SLACK_SCRAPERFAILUREWEBHOOK_CHANNEL
+        }
     }
 }
