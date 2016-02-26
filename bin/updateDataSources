@@ -19,6 +19,7 @@ var theNobleFir = require('../scrapers/theNobleFir');
 var theSixgill = require('../scrapers/theSixgill');
 var theBarkingDog = require('../scrapers/theBarkingDog');
 var thePineBox = require('../scrapers/thePineBox');
+var toronadoSeattle = require('../scrapers/toronadoSeattle');
 
 var async = require('async');
 
@@ -37,7 +38,8 @@ var scrapers = {
     'theNobleFir': theNobleFir,
     'theSixgill': theSixgill,
     'theBarkingDog': theBarkingDog,
-    'thePineBox': thePineBox
+    'thePineBox': thePineBox,
+    'toronadoSeattle': toronadoSeattle
 };
 
 function scrapeDataSources(callback) {
