@@ -13,7 +13,10 @@ module.exports = {
 
             var beers = [];
             $('#beerMenu').find($('.col b')).each(function(i, element) {
-                beers.push($(this).text());
+                var beer = $(this).text().trim();
+                if (beer) {
+                    beers.push(beer);
+                }
             });
 
             return callback(null, beers);
