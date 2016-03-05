@@ -127,6 +127,14 @@ function scrapeDataSources(callback) {
                     };
                 }
 
+                if (dataSource.scraper === 'theBarkingDog') {
+                    console.log('DEBUG: err = ' + err);
+                    console.log('DEBUG: scraperErr = ');
+                    console.dir(scraperErr);
+                    console.log('DEBUG: beers = ');
+                    console.dir(beers);
+                }
+                
                 if (scraperErr) {
                     return handleScraperFailure(scraperErr, dataSource, itrCallback);
                 } else {

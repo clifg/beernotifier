@@ -27,6 +27,13 @@ module.exports = {
                 beers.push(line);
             });
 
+            if (foundDelimiter) {
+                console.log('FOUND BEERS!');
+                for (var i = 0; i < beers.length; i++) {
+                    console.log(beers[i]);
+                }
+            }
+
             return foundDelimiter ?
                 callback(null, beers) :
                 callback("Didn't find -bottled beer- line we expected!");
