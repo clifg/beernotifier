@@ -109,6 +109,11 @@ function scrapeDataSources(callback) {
         }
 
         async.eachSeries(dataSources, function(dataSource, itrCallback) {
+            if (dataSource.isDisabled) {
+                console.log('Skipping disabled data source: ' + dataSource.name + '\n');
+                return itrCallback();
+            }
+
             console.log('Updating data source: ' + dataSource.name);
 
             var scraper = scrapers[dataSource.scraper];
@@ -127,14 +132,6 @@ function scrapeDataSources(callback) {
                     };
                 }
 
-                if (dataSource.scraper === 'theBarkingDog') {
-                    console.log('DEBUG: err = ' + err);
-                    console.log('DEBUG: scraperErr = ');
-                    console.dir(scraperErr);
-                    console.log('DEBUG: beers = ');
-                    console.dir(beers);
-                }
-                
                 if (scraperErr) {
                     return handleScraperFailure(scraperErr, dataSource, itrCallback);
                 } else {
