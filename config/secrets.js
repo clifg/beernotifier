@@ -19,7 +19,8 @@ module.exports = {
     slack: {
         scraperFailureWebhook: {
             uri: process.env.BEERNOTIFIER_SLACK_SCRAPERFAILUREWEBHOOK_URI,
-            channel: process.env.BEERNOTIFIER_SLACK_SCRAPERFAILUREWEBHOOK_CHANNEL
+            channel: process.env.BEERNOTIFIER_SLACK_SCRAPERFAILUREWEBHOOK_CHANNEL,
+            failureThreshold: 2
         }
     }
 }

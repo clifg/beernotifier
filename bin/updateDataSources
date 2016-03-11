@@ -66,30 +66,46 @@ function handleScraperFailure(err, dataSource, done) {
     }
 
     if (!dataSource.scraperStatus || dataSource.scraperStatus === 'ok') {
-        console.log('Setting ' + dataSource.name + ' scraper status to \'failed\' and pinging Slack!');
+        console.log('Setting ' + dataSource.name + ' scraper status to \'failed\'!');
         dataSource.scraperStatus = 'failed';
-        dataSource.save(function(dberr) {
-            if (dberr) {
-                console.log('ERROR: Failed to update datasource record for ' + dataSource.name);
-            }
+    }
+
+    if (!dataSource.consecutiveFailures) {
+        dataSource.consecutiveFailures = 0;
+    }
+
+    dataSource.consecutiveFailures++;
+
+    console.log('Consecutive failures: ' + dataSource.consecutiveFailures);
+
+    dataSource.save(function(dberr) {
+        if (dberr) {
+            console.log('ERROR: Failed to update datasource record for ' + dataSource.name);
+        }
+
+        // Rather than keeping a flag for if we've notified or not, we'll just only send the slack
+        // notification when we are at the threshold (rather than at or above).
+        if (dataSource.consecutiveFailures == secrets.slack.scraperFailureWebhook.failureThreshold) {
             var slackMessage = 'Scraper failure for datasource \'' + dataSource.name + '\'\n' + 
                 err.message;
             
             if (err.err) {
                 slackMessage += '\n' + err.err;
             }
-            
+
             return sendSlackScraperStatusMessage(slackMessage, done);
-        });
-    } else {
-        return done();
-    }
+        } else {
+            console.log('Not pinging slack, we\'ve already passed the threshold');
+            return done();
+        }
+    });
 };
 
 function handleScraperSuccess(dataSource, done) {
     if (dataSource.scraperStatus && dataSource.scraperStatus !== 'ok') {
         console.log('Setting ' + dataSource.name + ' scraper status to \'ok\' and pinging Slack!');
         dataSource.scraperStatus = 'ok';
+        dataSource.consecutiveFailures = 0;
         dataSource.save(function(err) {
             if (err) {
                 console.log('ERROR: Failed to update datasource record for ' + dataSource.name);
