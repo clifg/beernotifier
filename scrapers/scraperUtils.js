@@ -14,5 +14,10 @@ module.exports = {
             }
             return module.exports.retry(work, maxAttempts - 1, done);
         });
+    },
+    titleCase: function(string) {
+        return string.replace(/\w\S*/g, function(s){
+            return s.charAt(0).toUpperCase() + s.substr(1).toLowerCase();
+        });
     }
 };

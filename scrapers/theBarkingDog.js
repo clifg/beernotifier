@@ -2,6 +2,12 @@ var request = require('request');
 var cheerio = require('cheerio');
 var utils = require('./scraperUtils');
 
+function sanitizeListing(line) {
+    var formattedLine = utils.titleCase(line.trim());
+    formattedLine = formattedLine.replace(/[ \t]*Ii*pa/g, function(x) { return x.toUpperCase(); });
+    return formattedLine;
+}
+
 module.exports = {
     scrapeSite: function(callback) {
         utils.retry(function(callback) {
@@ -25,8 +31,7 @@ module.exports = {
                         foundDelimiter = true;
                         return false;
                     }
-
-                    beers.push(line);
+                    beers.push(sanitizeListing(line));
                 });
 
                 return foundDelimiter ?

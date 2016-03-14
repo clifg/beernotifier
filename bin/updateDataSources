@@ -181,13 +181,13 @@ function storeBeers(dataSource, beers, callback) {
     TapListing.find({ dataSource: dataSource, isActive: true }, function(err, currentListings) {
         var newListings = beers.filter(function(newBeer) {
             return !currentListings.some(function(currentTap) {
-                return currentTap.rawListing.trim() === newBeer.trim();
+                return currentTap.rawListing.trim().toUpperCase() === newBeer.trim().toUpperCase();
             });
         });
 
         var removedListings = currentListings.filter(function(currentTap) {
             return !beers.some(function(newBeer) {
-                return newBeer.trim() === currentTap.rawListing.trim();
+                return newBeer.trim().toUpperCase() === currentTap.rawListing.trim().toUpperCase();
             });
         });
 
