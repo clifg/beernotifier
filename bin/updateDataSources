@@ -83,9 +83,8 @@ function handleScraperFailure(err, dataSource, done) {
             console.log('ERROR: Failed to update datasource record for ' + dataSource.name);
         }
 
-        // Rather than keeping a flag for if we've notified or not, we'll just only send the slack
-        // notification when we are at the threshold (rather than at or above).
-        if (dataSource.consecutiveFailures == secrets.slack.scraperFailureWebhook.failureThreshold) {
+        if ((dataSource.scraperStatus !== 'notified') && 
+            (dataSource.consecutiveFailures >= secrets.slack.scraperFailureWebhook.failureThreshold)) {
             var slackMessage = 'Scraper failure for datasource \'' + dataSource.name + '\'\n' + 
                 err.message;
             
@@ -93,9 +92,18 @@ function handleScraperFailure(err, dataSource, done) {
                 slackMessage += '\n' + err.err;
             }
 
-            return sendSlackScraperStatusMessage(slackMessage, done);
+            dataSource.scraperStatus = 'notified';
+
+            return sendSlackScraperStatusMessage(slackMessage, function() {
+                dataSource.save(function(dberr) {
+                    if (dberr) {
+                        console.log('ERROR: Failed to set datasource status to notified for ' + dataSource.name);
+                    }
+                    return done();
+                });
+            });
         } else {
-            console.log('Not pinging slack, we\'ve already passed the threshold');
+            console.log('Not pinging slack, scraper status is ' + dataSource.scraperStatus);
             return done();
         }
     });
@@ -103,14 +111,20 @@ function handleScraperFailure(err, dataSource, done) {
 
 function handleScraperSuccess(dataSource, done) {
     if (dataSource.scraperStatus && dataSource.scraperStatus !== 'ok') {
-        console.log('Setting ' + dataSource.name + ' scraper status to \'ok\' and pinging Slack!');
+        console.log('Setting ' + dataSource.name + ' scraper status to \'ok\'!');
+        var pingSlack = dataSource.scraperStatus === 'notified';
         dataSource.scraperStatus = 'ok';
         dataSource.consecutiveFailures = 0;
         dataSource.save(function(err) {
             if (err) {
                 console.log('ERROR: Failed to update datasource record for ' + dataSource.name);
             }
-            return sendSlackScraperStatusMessage('Scraper failure RESOLVED for datasource \'' + dataSource.name + '\'', done);
+            if (pingSlack) {
+                console.log('Pinging slack because scraper state was notified');
+            }
+            return pingSlack ? 
+                sendSlackScraperStatusMessage('Scraper failure RESOLVED for datasource \'' + dataSource.name + '\'', done) :
+                done();
         });
     } else {
         return done();

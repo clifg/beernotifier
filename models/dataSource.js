@@ -3,6 +3,7 @@ var Schema = mongoose.Schema;
 
 var dataSourceSchema = new Schema({
     scraper: { type: String, required: true },
+    // scraperStatus goes from ok -> failed -> notified -> ok
     scraperStatus: { type: String, trim: true, default: 'ok' },
     consecutiveFailures: { type: Number, default: 0 },
     isDisabled: { type: Boolean, default: false },
