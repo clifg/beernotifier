@@ -307,6 +307,14 @@ describe('/users', function () {
                 });
             });
     });
+
+    it ('should return 401 on GET /users with invalid auth token', function(done) {
+        request(app)
+            .get('/api/v1/users')
+            .set('Accept', 'application/json')
+            .set('Authorization', 'Bearer qwerqwerqwer')
+            .expect(401, done);
+    });
 });
 
 describe('/datasources', function () {
@@ -396,6 +404,7 @@ describe('/datasources', function () {
         request(app)
             .get('/api/v1/datasources')
             .set('Accept', 'application/json')
+            .set('Authorization', 'Bearer ' + tokens.userJwt)
             .expect(200)
             .end(function(err, res) {
                 if (err) throw err;
@@ -412,6 +421,7 @@ describe('/datasources', function () {
         request(app)
             .get('/api/v1/datasources')
             .set('Accept', 'application/json')
+            .set('Authorization', 'Bearer ' + tokens.userJwt)
             .expect(200)
             .end(function(err, res) {
                 if (err) throw err;
@@ -427,6 +437,7 @@ describe('/datasources', function () {
         request(app)
             .get('/api/v1/datasources?updates=true')
             .set('Accept', 'application/json')
+            .set('Authorization', 'Bearer ' + tokens.userJwt)
             .expect(200)
             .end(function(err, res) {
                 if (err) throw err;
@@ -449,6 +460,7 @@ describe('/datasources', function () {
             request(app)
                 .get(url)
                 .set('Accept', 'application/json')
+                .set('Authorization', 'Bearer ' + tokens.userJwt)
                 .expect(200)
                 .end(function(err, res) {
                     if (err) throw err;
@@ -468,6 +480,7 @@ describe('/datasources', function () {
         request(app)
             .get('/api/v1/datasources/' + testDataSources[1].id)
             .set('Accept', 'application/json')
+            .set('Authorization', 'Bearer ' + tokens.userJwt)
             .expect(200)
             .end(function(err, res) {
                 if (err) throw err;
@@ -486,6 +499,7 @@ describe('/datasources', function () {
         request(app)
             .get('/api/v1/datasources')
             .set('Accept', 'application/json')
+            .set('Authorization', 'Bearer ' + tokens.userJwt)
             .expect(500)
             .end(function(err, res) {
                 DataSourceMock.verify();
@@ -498,14 +512,31 @@ describe('/datasources', function () {
         request(app)
             .get('/api/v1/datasources/thisisnotanid')
             .set('Accept', 'application/json')
+            .set('Authorization', 'Bearer ' + tokens.userJwt)
             .expect(500, done);
     });
 
-    it ('shoule return 404 on GET /datasources/:id with a non-existent id', function(done) {
+    it ('should return 404 on GET /datasources/:id with a non-existent id', function(done) {
         request(app)
             .get('/api/v1/datasources/11111111111111903f138bf4')
             .set('Accept', 'application/json')
+            .set('Authorization', 'Bearer ' + tokens.userJwt)
             .expect(404, done);
+    });
+
+    it ('should return 401 on GET /datasources with no auth token', function(done) {
+        request(app)
+            .get('/api/v1/datasources')
+            .set('Accept', 'application/json')
+            .expect(401, done);
+    });
+
+    it ('should return 401 on GET /datasources with no invalid auth token', function(done) {
+        request(app)
+            .get('/api/v1/datasources')
+            .set('Accept', 'application/json')
+            .set('Authorization', 'Bearer asdfasdfasdfasdf')
+            .expect(401, done);
     });
 
     after(function(done) {
@@ -635,6 +666,7 @@ describe('/taplistings', function () {
         request(app)
             .get('/api/v1/taplistings')
             .set('Accept', 'application/json')
+            .set('Authorization', 'Bearer ' + tokens.userJwt)
             .expect(200)
             .end(function(err, res) {
                 if (err) throw err;
@@ -652,6 +684,7 @@ describe('/taplistings', function () {
         request(app)
             .get('/api/v1/taplistings?active=true')
             .set('Accept', 'application/json')
+            .set('Authorization', 'Bearer ' + tokens.userJwt)
             .expect(200)
             .end(function(err, res) {
                 if (err) throw err;
@@ -679,6 +712,7 @@ describe('/taplistings', function () {
             request(app)
                 .get(url)
                 .set('Accept', 'application/json')
+                .set('Authorization', 'Bearer ' + tokens.userJwt)
                 .expect(200)
                 .end(function(err, res) {
                     if (err) throw err;
@@ -703,12 +737,28 @@ describe('/taplistings', function () {
         request(app)
             .get('/api/v1/taplistings')
             .set('Accept', 'application/json')
+            .set('Authorization', 'Bearer ' + tokens.userJwt)
             .expect(500)
             .end(function(err, res) {
                 TapListingMock.verify();
                 if (err) throw err;
                 done();
             });
+    });
+
+    it ('should return 401 on GET /taplistings with no auth token', function(done) {
+        request(app)
+            .get('/api/v1/taplistings')
+            .set('Accept', 'application/json')
+            .expect(401, done);
+    });
+
+    it ('should return 401 on GET /taplistings with invalid auth token', function(done) {
+        request(app)
+            .get('/api/v1/taplistings')
+            .set('Accept', 'application/json')
+            .set('Authorization', 'Bearer asdfjasefaawef')
+            .expect(401, done);
     });
 
     after(function(done) {
