@@ -64,7 +64,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 var jwtSign = function(x) {
-    return jwt.sign(x, secrets.jwtSecret, { expiresIn: 60 });
+    return jwt.sign(x, secrets.jwtSecret, { expiresIn: 15 * 60 });
 };
 
 app.post('/signup', function(req, res) {
@@ -150,6 +150,15 @@ app.post('/login', function(req, res) {
 app.get('/logout', function(req, res) {
   req.logout();
   res.sendStatus(200);
+});
+
+// REST APIs are protected by JWT
+app.use('/api', expressJwt({ secret: secrets.jwtSecret }));
+
+app.use(function(err, req, res, next) {
+    if (err.name === 'UnauthorizedError') {
+      res.status(401).send('Invalid token');
+    }
 });
 
 app.use('/api/v1/users', users);

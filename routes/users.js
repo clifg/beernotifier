@@ -18,7 +18,7 @@ router.get('/', function(req, res) {
 });
 
 router.get('/:id', function(req, res) {
-    if (!req.user || ((req.user.id != req.params.id) && !req.user.isAdmin)) {
+    if (!req.user || ((req.user._id != req.params.id) && !req.user.isAdmin)) {
         return res.sendStatus(401);
     }
     User.findById(req.params.id, function(err, user) {
@@ -31,7 +31,7 @@ router.get('/:id', function(req, res) {
 });
 
 router.delete('/:id', function(req, res) {
-    if (!req.user || ((req.user.id != req.params.id) && !req.user.isAdmin)) {
+    if (!req.user || ((req.user._id != req.params.id) && !req.user.isAdmin)) {
         return res.sendStatus(401);
     }
     User.findById(req.params.id, function(err, user) {

@@ -12,106 +12,112 @@ var User = require('../models/user');
 var DataSource = require('../models/dataSource');
 var TapListing = require('../models/tapListing');
 
-describe('/users', function () {
-    var testUsers = [
-    {
-        email: 'test1@email.com',
-        password: 'plaintextpass1',
-        isAdmin: true
-    },
-    {
-        email: 'test2@email.com',
-        password: 'plaintextpass2',
-        isAdmin: false
-    },
-    {
-        email: 'test3@email.com',
-        password: 'plaintextpass3',
-        isAdmin: false
-    }];
+var testUsers = [
+{
+    email: 'test1@email.com',
+    password: 'plaintextpass1',
+    isAdmin: true
+},
+{
+    email: 'test2@email.com',
+    password: 'plaintextpass2',
+    isAdmin: false
+},
+{
+    email: 'test3@email.com',
+    password: 'plaintextpass3',
+    isAdmin: false
+}];
 
-    var adminAgent = request.agent(app);
-    var userAgent = request.agent(app);
+var tokens = {};
 
-    function addTestUser(user, callback) {
-        var newUser = new User();
-        newUser.email = user.email;
-        newUser.password = newUser.generateHash(user.password);
-        newUser.isAdmin = user.isAdmin;
+function addTestUser(user, callback) {
+    var newUser = new User();
+    newUser.email = user.email;
+    newUser.password = newUser.generateHash(user.password);
+    newUser.isAdmin = user.isAdmin;
 
-        newUser.save(function(err) {
-            if (err) throw err;
-            user.id = newUser.id;
-            callback();
-        });
+    newUser.save(function(err) {
+        if (err) throw err;
+        user.id = newUser.id;
+        callback();
+    });
+}
+
+before(function(done) {
+    this.timeout(20000);
+    if (process.env.NODE_ENV !== 'test') {
+        throw('Tests must be running in node test environment!');
     }
+    async.series([
+        function(callback) {
+            MongoClient.connect(secrets.db.test, function(err, mongo) {
+                if (err) throw err;
+                this.db = mongo;
+                callback();
+            });
+        },
+        function(callback) {
+            db.dropDatabase(callback);
+        },
+        function(callback) {
+            async.each(testUsers, function(testUser, itrCallback) {
+                addTestUser(testUser, itrCallback);
+            }, function(err) {
+                if (err) throw err;
+                callback();
+            });
+        },
+        function(callback) {
+            request(app)
+                .post('/login')
+                .send({email: testUsers[0].email, password: testUsers[0].password})
+                .expect(200)
+                .end(function(err, res) {
+                    if (err) throw err;
+                    expect(res.body.token).to.not.be.undefined;
+                    tokens.adminJwt = res.body.token;
+                    callback();
+                });
+        },
+        function(callback) {
+            request(app)
+                .post('/login')
+                .send({email: testUsers[1].email, password: testUsers[1].password})
+                .expect(200)
+                .end(function(err, res) {
+                    if (err) throw err;
+                    expect(res.body.token).to.not.be.undefined;
+                    tokens.userJwt = res.body.token;
+                    callback();
+                });
+        }
+    ],
+    function(err) {
+        if (err) {
+            throw(err);
+        }
+        done();
+    });
+});
 
+
+after(function(done) {
+    this.timeout(20000);
+    db.dropDatabase(done);
+});
+
+describe('/users', function () {
     function usersAreEqual(user1, user2) {
         return ((user1.email === user2.email) &&
                 (user1.isAdmin === user2.isAdmin));
     }
 
-    before(function(done) {
-        this.timeout(20000);
-        if (process.env.NODE_ENV !== 'test') {
-            throw('Tests must be running in node test environment!');
-        }
-        async.series([
-            function(callback) {
-                MongoClient.connect(secrets.db.test, function(err, mongo) {
-                    if (err) throw err;
-                    this.db = mongo;
-                    callback();
-                });
-            },
-            function(callback) {
-                db.dropDatabase(callback);
-            },
-            function(callback) {
-                async.each(testUsers, function(testUser, itrCallback) {
-                    addTestUser(testUser, itrCallback);
-                }, function(err) {
-                    if (err) throw err;
-                    callback();
-                });
-            },
-            function(callback) {
-                adminAgent
-                    .post('/login')
-                    .send({email: testUsers[0].email, password: testUsers[0].password})
-                    .expect(200)
-                    .end(function(err, res) {
-                        if (err) throw err;
-                        expect(res.body.token).to.not.be.undefined;
-                        adminAgent.jwt = res.body.token;
-                        callback();
-                    });
-            },
-            function(callback) {
-                userAgent
-                    .post('/login')
-                    .send({email: testUsers[1].email, password: testUsers[1].password})
-                    .expect(200)
-                    .end(function(err, res) {
-                        if (err) throw err;
-                        expect(res.body.token).to.not.be.undefined;
-                        userAgent.jwt = res.body.token;
-                        callback();
-                    });
-            }
-        ],
-        function(err) {
-            if (err) {
-                throw(err);
-            }
-            done();
-        });
-    });
-
     it ('should return all users on GET /users to admin', function(done) {
-        adminAgent
+        request(app)
             .get('/api/v1/users')
             .set('Accept', 'application/json')
+            .set('Authorization', 'Bearer ' + tokens.adminJwt)
             .expect(200)
             .end(function(err, res) {
                 if (err) throw err;
@@ -124,13 +130,14 @@ describe('/users', function () {
     });
 
     it ('should return 401 on GET /users to regular user', function(done) {
-        userAgent
+        request(app)
             .get('/api/v1/users')
             .set('Accept', 'application/json')
+            .set('Authorization', 'Bearer ' + tokens.userJwt)
             .expect(401, done);
     });
 
-    it ('should return 401 on GET /users when not logged in', function(done) {
+    it ('should return 401 on GET /users with no auth token', function(done) {
         request(app)
             .get('/api/v1/users')
             .set('Accept', 'application/json')
@@ -143,9 +150,10 @@ describe('/users', function () {
             .chain('select').withArgs('-password')
             .chain('exec')
             .yields('error');
-        adminAgent
+        request(app)
             .get('/api/v1/users')
             .set('Accept', 'application/json')
+            .set('Authorization', 'Bearer ' + tokens.adminJwt)
             .expect(500)
             .end(function(err, res) {
                 UserMock.verify();
@@ -155,9 +163,10 @@ describe('/users', function () {
     });
 
     it ('should not return password fields on GET /users', function(done) {
-        adminAgent
+        request(app)
             .get('/api/v1/users')
             .set('Accept', 'application/json')
+            .set('Authorization', 'Bearer ' + tokens.adminJwt)
             .expect(200)
             .end(function(err, res) {
                 if (err) throw err;
@@ -171,9 +180,10 @@ describe('/users', function () {
     });
 
     it ('should return one user on GET /users/:id to admin', function(done) {
-        adminAgent
+        request(app)
             .get('/api/v1/users/' + testUsers[0].id)
             .set('Accept', 'application/json')
+            .set('Authorization', 'Bearer ' + tokens.adminJwt)
             .expect(200)
             .end(function(err, res) {
                 if (err) throw err;
@@ -184,9 +194,10 @@ describe('/users', function () {
     });
 
     it ('should return user data for \'myself\' on GET /users/:id to regular user', function(done) {
-        userAgent
+        request(app)
             .get('/api/v1/users/' + testUsers[1].id)
             .set('Accept', 'application/json')
+            .set('Authorization', 'Bearer ' + tokens.userJwt)
             .expect(200)
             .end(function(err, res) {
                 if (err) throw err;
@@ -197,9 +208,10 @@ describe('/users', function () {
     });
 
     it ('should return 401 on GET /users/:id of someone else to regular user', function(done) {
-        userAgent
+        request(app)
             .get('/api/v1/users/' + testUsers[0].id)
             .set('Accept', 'application/json')
+            .set('Authorization', 'Bearer ' + tokens.userJwt)
             .expect(401, done);
     });
 
@@ -211,9 +223,10 @@ describe('/users', function () {
     });
 
     it ('should not return password on GET /users/:id', function(done) {
-        adminAgent
+        request(app)
             .get('/api/v1/users/' + testUsers[0].id)
             .set('Accept', 'application/json')
+            .set('Authorization', 'Bearer ' + tokens.adminJwt)
             .expect(200)
             .end(function(err, res) {
                 if (err) throw err;
@@ -224,22 +237,25 @@ describe('/users', function () {
     });
 
     it ('should return 500 on GET /users/:id with bogus user id', function(done) {
-        adminAgent
+        request(app)
             .get('/api/v1/users/thisisnotanid')
             .set('Accept', 'application/json')
+            .set('Authorization', 'Bearer ' + tokens.adminJwt)
             .expect(500, done);
     });
 
     it ('should return 404 on GET /users/:id with nonexistent user id', function(done) {
-        adminAgent
+        request(app)
             .get('/api/v1/users/111111111170d64339e061b4')
             .set('Accept', 'application/json')
+            .set('Authorization', 'Bearer ' + tokens.adminJwt)
             .expect(404, done);
     });
 
     it ('should return 401 on DELETE /users/:id by regular user', function(done) {
-        userAgent
+        request(app)
             .delete('/api/v1/users/' + testUsers[2].id)
+            .set('Authorization', 'Bearer ' + tokens.userJwt)
             .expect(401, done);
     });
 
@@ -250,21 +266,24 @@ describe('/users', function () {
     });
 
     it ('should return 500 on DELETE /users/:id with bogus user id', function(done) {
-        adminAgent
+        request(app)
             .delete('/api/v1/users/thisisnotanid')
+            .set('Authorization', 'Bearer ' + tokens.adminJwt)
             .expect(500, done);
     });
 
     it ('should return 404 on DELETE /users/:id with nonexistent user id', function(done) {
-        adminAgent
+        request(app)
             .delete('/api/v1/users/111111111170d64339e061b4')
+            .set('Authorization', 'Bearer ' + tokens.adminJwt)
             .expect(404, done);
     });
 
     it ('should return 500 on DELETE /users/:id with database internal error', function(done) {
         sinon.stub(User.prototype, 'remove').yields('error');
-        adminAgent
+        request(app)
             .delete('/api/v1/users/' + testUsers[2].id)
+            .set('Authorization', 'Bearer ' + tokens.adminJwt)
             .expect(500)
             .end(function(err, res) {
                 User.prototype.remove.restore();
@@ -274,8 +293,9 @@ describe('/users', function () {
     });
 
     it ('should delete user record on DELETE /users/:id by admin', function(done) {
-        adminAgent
+        request(app)
             .delete('/api/v1/users/' + testUsers[2].id)
+            .set('Authorization', 'Bearer ' + tokens.adminJwt)
             .expect(200)
             .end(function(err, res) {
                 if (err) throw err;
@@ -286,11 +306,6 @@ describe('/users', function () {
                     done();
                 });
             });
-    });
-
-    after(function(done) {
-        this.timeout(20000);
-        db.dropDatabase(done);
     });
 });
 
@@ -355,7 +370,10 @@ describe('/datasources', function () {
                 });
             },
             function(callback) {
-                db.dropDatabase(callback);
+                db.collection('datasources').drop(function(err, response) {
+                    if (err && err.errmsg !== 'ns not found') throw err;
+                    callback();
+                });
             },
             function(callback) {
                 async.each(testDataSources, function(testDataSource, itrCallback) {
@@ -492,7 +510,10 @@ describe('/datasources', function () {
 
     after(function(done) {
         this.timeout(20000);
-        db.dropDatabase(done);
+        db.collection('datasources').drop(function(err, response) {
+            if (err) throw err;
+            done();
+        });
     });
 });
 
@@ -585,7 +606,10 @@ describe('/taplistings', function () {
                 });
             },
             function(callback) {
-                db.dropDatabase(callback);
+                db.collection('taplistings').drop(function(err, response) {
+                    if (err && err.errmsg !== 'ns not found') throw err;
+                    callback();
+                });
             },
             function(callback) {
                 addTestDataSource(testDataSource, callback);
@@ -689,6 +713,9 @@ describe('/taplistings', function () {
 
     after(function(done) {
         this.timeout(20000);
-        db.dropDatabase(done);
+        db.collection('taplistings').drop(function(err, response) {
+            if (err) throw err;
+            done();
+        });
     });
 });
