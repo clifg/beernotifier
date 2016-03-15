@@ -1,4 +1,5 @@
 module.exports = {
+    jwtSecret: process.env.BEERNOTIFIER_JWT_SECRET || 'TESTjwtS3CRET',
     db: {
         production: process.env.MONGOLAB_URI || 'mongodb://localhost:27017/beernotifier',
         test: 'mongodb://localhost:27017/beernotifier_test'

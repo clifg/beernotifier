@@ -79,9 +79,11 @@ describe('/users', function () {
                 adminAgent
                     .post('/login')
                     .send({email: testUsers[0].email, password: testUsers[0].password})
-                    .expect(302)
+                    .expect(200)
                     .end(function(err, res) {
                         if (err) throw err;
+                        expect(res.body.token).to.not.be.undefined;
+                        adminAgent.jwt = res.body.token;
                         callback();
                     });
             },
@@ -89,9 +91,11 @@ describe('/users', function () {
                 userAgent
                     .post('/login')
                     .send({email: testUsers[1].email, password: testUsers[1].password})
-                    .expect(302)
+                    .expect(200)
                     .end(function(err, res) {
                         if (err) throw err;
+                        expect(res.body.token).to.not.be.undefined;
+                        userAgent.jwt = res.body.token;
                         callback();
                     });
             }

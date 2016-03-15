@@ -14,6 +14,10 @@ var mongoose = require('mongoose');
 var passport = require('passport');
 var nodemailer = require('nodemailer');
 
+var expressJwt = require('express-jwt');
+var jwt = require('jsonwebtoken');
+var owasp = require('owasp-password-strength-test');
+
 var User = require('./models/user');
 
 var secrets = require('./config/secrets');
@@ -59,26 +63,88 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.post('/signup', function(req, res, next) {
-  passport.authenticate('local-signup', function(err, user, info) {
-    if (err) { return next(err); }
-    if (!user) { console.dir(info); return res.status(401).send(info.message); }
-    req.logIn(user, function(err) {
-      if (err) { return next(err); }
-      return res.redirect('/');
+var jwtSign = function(x) {
+    return jwt.sign(x, secrets.jwtSecret, { expiresIn: 60 });
+};
+
+app.post('/signup', function(req, res) {
+    var email = req.body.email;
+    var password = req.body.password;
+    console.log(req.body.email);
+    console.log(req.body.password);
+    if (!email || !password) {
+      return res.status(401).send('Must supply username and password');
+    }
+
+    User.findOne({ 'email': email })
+        .exec(function(err, user) {
+        if (err) {
+            console.log(' ! Database error finding user for email ' + email);
+            return res.status(401).send(err);
+        }
+
+        if (user) {
+            return res.status(401).send('That email is already taken.');
+        } else {
+            var passwordResult = owasp.test(password);
+            if (!passwordResult.strong) {
+                console.log(' ! Rejecting weak password');
+                console.dir(passwordResult);
+                return res.status(401).send(passwordResult.errors.join('\n'));
+            }
+            
+            var newUser = new User();
+
+            newUser.email = email;
+            newUser.password = newUser.generateHash(password);
+            newUser.profile.firstName = req.body.firstName;
+            newUser.profile.lastName = req.body.lastName;
+            newUser.profile.zipCode = req.body.zipCode;
+            newUser.profile.gender = req.body.gender;
+
+            newUser.save(function(err) {
+                if (err) {
+                    console.dir(err);
+                    throw err;
+                }
+
+                newUser.password = undefined;
+
+                var token = jwtSign(newUser);
+                return res.json({ token: token });
+            });
+        }
     });
-  })(req,res,next);
 });
 
-app.post('/login', function(req, res, next) {
-  passport.authenticate('local-login', function(err, user, info) {
-    if (err) { return next(err); }
-    if (!user) { console.dir(info); return res.status(401).send(info.message); }
-    req.logIn(user, function(err) {
-      if (err) { return next(err); }
-      return res.redirect('/');
+app.post('/login', function(req, res) {
+    var email = req.body.email;
+    var password = req.body.password;
+    if (!email || !password) {
+        res.status(401).send('Must supply username and password');
+    }
+    User.findOne({ 'email': email.toLowerCase().trim() })
+        .exec(function(err, user) {
+        if (err) {
+            return res.status(401).send(err);
+        }
+
+        if (!user) {
+            console.log('AUTH: Invalid user');
+            return res.status(401).send('User not found.');
+        }
+
+        if (!user.validPassword(password)) {
+            console.log('AUTH: Invalid password');
+            return res.status(401).send('Invalid password.');
+        }
+
+        var jsonUser = user.toObject();
+        jsonUser.password = undefined;
+
+        var token = jwtSign(jsonUser);
+        return res.json({ token: token });
     });
-  })(req, res, next);
 });
 
 app.get('/logout', function(req, res) {
