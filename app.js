@@ -3,15 +3,12 @@ if (process.env.NEW_RELIC_LICENSE_KEY) {
 }
 
 var express = require('express');
-var session = require('express-session');
 var path = require('path');
 var favicon = require('serve-favicon');
 var logger = require('morgan');
 var bodyParser = require('body-parser');
 
-var MongoStore = require('connect-mongo')(session);
 var mongoose = require('mongoose');
-var passport = require('passport');
 var nodemailer = require('nodemailer');
 
 var expressJwt = require('express-jwt');
@@ -21,7 +18,6 @@ var owasp = require('owasp-password-strength-test');
 var User = require('./models/user');
 
 var secrets = require('./config/secrets');
-var passportConf = require('./config/passport');
 
 var users = require('./routes/users');
 var tapListings = require('./routes/tapListings');
@@ -42,8 +38,7 @@ var transport = nodemailer.createTransport({
   }
 });
 
-// Handle static files first, so we don't incur the session/user lookup overhead as many times.
-// Since we're currently a single-page app, we have like 8 requests just to load the homepage. :(
+// Handle static files first
 app.use(express.static(path.join(__dirname, 'public')));
 
 // uncomment after placing your favicon in /public
@@ -53,18 +48,11 @@ if (process.env.NODE_ENV !== 'test') {
 }
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(session({
-  resave: false,
-  saveUninitialized: true,
-  secret: 'seahawkmarinersounder',
-  cookie: { maxAge: 14 * 24 * 60 * 60 * 1000 },
-  store: new MongoStore({ mongooseConnection: mongoose.connection, autoReconnect: true, touchAfter: 24 * 3600 })
-}));
-app.use(passport.initialize());
-app.use(passport.session());
 
 var jwtSign = function(x) {
-    return jwt.sign(x, secrets.jwtSecret, { expiresIn: 15 * 60 });
+    // TODO: Rather than using tokens that never expire, refresh tokens on successful
+    // API queries and generate refresh tokens for use in mobile apps.
+    return jwt.sign(x, secrets.jwtSecret);
 };
 
 app.post('/signup', function(req, res) {
@@ -111,7 +99,7 @@ app.post('/signup', function(req, res) {
                 newUser.password = undefined;
 
                 var token = jwtSign(newUser);
-                return res.json({ token: token });
+                return res.json({ token: jwtSign(newUser) });
             });
         }
     });
@@ -142,14 +130,8 @@ app.post('/login', function(req, res) {
         var jsonUser = user.toObject();
         jsonUser.password = undefined;
 
-        var token = jwtSign(jsonUser);
-        return res.json({ token: token });
+        return res.json({ token: jwtSign(jsonUser) });
     });
-});
-
-app.get('/logout', function(req, res) {
-  req.logout();
-  res.sendStatus(200);
 });
 
 // REST APIs are protected by JWT
@@ -164,9 +146,14 @@ app.use(function(err, req, res, next) {
 app.use('/api/v1/users', users);
 app.get('/api/v1/login', function(req, res) {
   if (req.user) {
-    var myUser = JSON.parse(JSON.stringify(req.user));
-    delete myUser.password;
-    return res.json(myUser);
+    // There's a lot of other crap in the user model that we don't want to pass back, so
+    // we'll just select what we want in, rather than trying to hide what we don't.
+    var parsedUser = {};
+    parsedUser.id = req.user._id;
+    parsedUser.email = req.user.email;
+    parsedUser.isAdmin = req.user.isAdmin;
+    parsedUser.profile = req.user.profile;
+    return res.json(parsedUser);
   }
 
   return res.sendStatus(401);
