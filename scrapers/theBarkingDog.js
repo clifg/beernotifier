@@ -2,9 +2,20 @@ var request = require('request');
 var cheerio = require('cheerio');
 var utils = require('./scraperUtils');
 
+var allCaps = [
+    'DIPA',
+    'BBL',
+    'BA'
+];
+
 function sanitizeListing(line) {
     var formattedLine = utils.titleCase(line.trim());
-    formattedLine = formattedLine.replace(/[ \t]*Ii*pa/g, function(x) { return x.toUpperCase(); });
+    // Fix up parts that shouldn't actually be title-case, like IPA, IIPA, IRA, DIPA, etc.
+    formattedLine = formattedLine.replace(/\bIi*[pr]a\b/g, function(x) { return x.toUpperCase(); });
+    for (var i = 0; i < allCaps.length; i++) {
+        var regex = new RegExp('\\b' + utils.titleCase(allCaps[i]) + '\\b', 'g');
+        formattedLine = formattedLine.replace(regex, function(x) { return x.toUpperCase(); });
+    }
     return formattedLine;
 }
 
