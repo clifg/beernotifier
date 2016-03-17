@@ -38,23 +38,46 @@ app.config(['$routeProvider', function($routeProvider){
         });
 }]);
 
-app.run(['$rootScope', '$resource', '$location', '$route', function($rootScope, $resource, $location, $route) {
+app.factory('authInterceptor', function($rootScope, $q, $window, $location) {
+    return {
+        request: function(config) {
+            config.headers = config.headers || {};
+            if ($window.localStorage.token) {
+                config.headers.Authorization = 'Bearer ' + $window.localStorage.token;
+            }
+            return config;
+        },
+        response: function(response) {
+            if (response.status === 401) {
+                // TODO: Handle auth failures
+                $location.url('/login');
+            }
+            return response || $q.when(response);
+        }
+    };
+});
+
+app.config(function ($httpProvider) {
+    $httpProvider.interceptors.push('authInterceptor');
+});
+
+app.run(['$rootScope', '$http', '$location', '$route', function($rootScope, $http, $location, $route) {
     $rootScope.$on('$routeChangeStart', function(event, next, current) {
         if ($rootScope.user == null)
         {
-            var Login = $resource('/api/v1/login');
-
-            Login.get(function(user) {
-                // We're logged in -- store the user for everyone to use
-                $rootScope.user = user;
-            }, function() {
-                // If we fail, redirect the user to log in
-                if (next.templateUrl != 'partials/login.html' && next.templateUrl != 'partials/signup.html')
-                {
-                    $location.url('/login');
-                    $route.reload();
-                }
-            });
+            $http.get('/api/v1/login')
+                .success(function(user) {
+                    // We're logged in -- store the user for everyone to use
+                    $rootScope.user = user;
+                })
+                .error(function() {
+                    // If we fail, redirect the user to log in
+                    if (next.templateUrl != 'partials/login.html' && next.templateUrl != 'partials/signup.html')
+                    {
+                        $location.url('/login');
+                        $route.reload();
+                    }
+                });
         }
     });
 }]);

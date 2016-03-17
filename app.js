@@ -94,10 +94,10 @@ app.post('/signup', function(req, res) {
                     throw err;
                 }
 
+                var jsonUser = newUser.toObject();
                 newUser.password = undefined;
 
-                var token = jwtSign(newUser);
-                return res.json({ token: jwtSign(newUser) });
+                return res.json({ token: jwtSign(jsonUser) });
             });
         }
     });
@@ -151,6 +151,8 @@ app.get('/api/v1/login', function(req, res) {
     parsedUser.email = req.user.email;
     parsedUser.isAdmin = req.user.isAdmin;
     parsedUser.profile = req.user.profile;
+    console.log(req.user);
+    console.log(parsedUser);
     return res.json(parsedUser);
   }
 
