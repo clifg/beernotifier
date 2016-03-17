@@ -58,8 +58,6 @@ var jwtSign = function(x) {
 app.post('/signup', function(req, res) {
     var email = req.body.email;
     var password = req.body.password;
-    console.log(req.body.email);
-    console.log(req.body.password);
     if (!email || !password) {
       return res.status(401).send('Must supply username and password');
     }
