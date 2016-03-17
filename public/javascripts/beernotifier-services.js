@@ -1,13 +1,10 @@
 var app = angular.module('BeerNotifier');
 
-app.factory('LogoutService', function($rootScope, $http, $location) {
+app.factory('LogoutService', function($rootScope, $http, $location, $window, $route) {
     return function() {
-        console.log('logging out...');
-        $http.get('/logout')
-            .then(function() {
-                console.log('logged out!');
-                $rootScope.user = null;
-                $location.path('/');
-            });
+        $rootScope.user = null;
+        delete $window.localStorage.token;
+        $location.path('/');
+        $route.reload();
     };          
 });

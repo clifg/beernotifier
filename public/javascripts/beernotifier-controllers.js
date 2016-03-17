@@ -105,8 +105,8 @@ app.controller('LocationCtrl', ['$scope', '$resource', '$location', '$http', '$r
     }
 ]);
 
-app.controller('LoginCtrl', ['$scope', '$rootScope', '$http', '$location',
-    function($scope, $rootScope, $http, $location) {
+app.controller('LoginCtrl', ['$scope', '$rootScope', '$http', '$location', '$window',
+    function($scope, $rootScope, $http, $location, $window) {
         if ($rootScope.user) {
             return $location.path('/');
         };
@@ -116,6 +116,7 @@ app.controller('LoginCtrl', ['$scope', '$rootScope', '$http', '$location',
         $scope.login = function(email, password) {
             $http.post('/login', { email: email, password: password })
                 .then(function(response) {
+                    $window.localStorage.token = response.data.token;
                     $location.path('/');
                 }, function(response) {
                     addAlert(response.data, 'danger');
@@ -132,8 +133,8 @@ app.controller('LoginCtrl', ['$scope', '$rootScope', '$http', '$location',
     }
 ]);
 
-app.controller('SignupCtrl', ['$scope', '$http', '$location',
-    function($scope, $http, $location) {
+app.controller('SignupCtrl', ['$scope', '$http', '$location', '$window',
+    function($scope, $http, $location, $window) {
         $scope.alerts = [];
 
         $scope.signup = function(name, email, password, confirmPassword) {
@@ -161,6 +162,7 @@ app.controller('SignupCtrl', ['$scope', '$http', '$location',
                 gender: $scope.gender,
                 password: $scope.password })
                 .then(function(response) {
+                    $window.localStorage.token = response.data.token;
                     $location.path('/');
                 }, function(response) {
                     console.dir(response);
@@ -178,16 +180,14 @@ app.controller('SignupCtrl', ['$scope', '$http', '$location',
     }
 ]);
 
-app.controller('LogoutCtrl', ['$scope', '$rootScope', '$http', '$location',
-    function($scope, $rootScope, $http, $location) {
-        console.log('logging out...');
-        $http.get('/api/v1/logout')
-            .then(function() {
-                console.log('logged out!');
-                $rootScope.user = null;
-                $location.path('/');
-            });
-}]);
+app.controller('LogoutCtrl', ['$scope', '$rootScope', '$http', '$location', '$window',
+    function($scope, $rootScope, $http, $location, $window) {
+        $rootScope.user = null;
+        console.log($window.localStorage.token);
+        delete $window.localStorage.token;
+        $location.path('/');
+    }
+]);
 
 app.controller('UserCtrl', ['$scope', '$resource', '$location', '$routeParams',
     function($scope, $resource, $location, $routeParams) {
@@ -206,6 +206,7 @@ app.controller('AdminCtrl', ['$rootScope', '$scope', '$resource', '$location',
 
 app.controller('NavbarCtrl', ['$rootScope', '$scope', '$http', '$location',
     function($rootScope, $scope, $http, $location) {
+        console.log($rootScope.user);
         $scope.user = $rootScope.user;
     }
 ]);
