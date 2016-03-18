@@ -94,6 +94,7 @@ function handleScraperFailure(err, dataSource, done) {
 
             dataSource.scraperStatus = 'notified';
 
+            console.log('Scraper status is [' + dataSource.scraperStatus + '], sending slack message');
             return sendSlackScraperStatusMessage(slackMessage, function() {
                 dataSource.save(function(dberr) {
                     if (dberr) {
@@ -103,7 +104,7 @@ function handleScraperFailure(err, dataSource, done) {
                 });
             });
         } else {
-            console.log('Not pinging slack, scraper status is ' + dataSource.scraperStatus);
+            console.log('Not pinging slack, scraper status is [' + dataSource.scraperStatus + ']');
             return done();
         }
     });

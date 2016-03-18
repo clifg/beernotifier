@@ -22,7 +22,7 @@ function sanitizeListing(line) {
 module.exports = {
     scrapeSite: function(callback) {
         utils.retry(function(callback) {
-            request('http://thebarkingdogalehouse.com/beers/', function(err, res, body) {
+            request('http://thebarkingdogalehouse.com/?page_id=3', function(err, res, body) {
                 if (err) {
                     return callback(err);
                 }
