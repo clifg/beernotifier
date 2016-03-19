@@ -14,7 +14,6 @@ var userSchema = new Schema({
         firstName: { type: String, trim: true, default: '' },
         lastName: { type: String, trim: true, default: '' },
         zipCode: { type: String, trim: true, default: '' },
-        gender: { type: String, trim: true, default: '' },
         picture: { type: String, default: '' }
     },
     

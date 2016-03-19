@@ -86,7 +86,6 @@ app.post('/signup', function(req, res) {
             newUser.profile.firstName = req.body.firstName;
             newUser.profile.lastName = req.body.lastName;
             newUser.profile.zipCode = req.body.zipCode;
-            newUser.profile.gender = req.body.gender;
 
             newUser.save(function(err) {
                 if (err) {

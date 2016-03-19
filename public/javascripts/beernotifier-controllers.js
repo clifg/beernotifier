@@ -149,17 +149,11 @@ app.controller('SignupCtrl', ['$scope', '$http', '$location', '$window',
                 return;
             }
 
-            if (!$scope.gender) {
-                addAlert('Please specify gender (or select \"I\'d rather not say\"', 'warning');
-                return;
-            }
-
             $http.post('/signup', { 
                 firstName: $scope.firstName,
                 lastName: $scope.lastName,
                 email: $scope.email,
                 zipCode: $scope.zipCode,
-                gender: $scope.gender,
                 password: $scope.password })
                 .then(function(response) {
                     $window.localStorage.token = response.data.token;
