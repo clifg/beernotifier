@@ -940,6 +940,110 @@ describe('/subscriptions', function () {
             .expect(401, done);
     });
 
+    it ('should return 500 on GET /subscriptions with internal database error', function(done) {
+        var SubscriptionMock = sinon.mock(Subscription);
+        SubscriptionMock.expects('find')
+            .chain('exec')
+            .yields('error');
+        request(app)
+            .get('/api/v1/subscriptions')
+            .set('Accept', 'application/json')
+            .set('Authorization', 'Bearer ' + tokens.adminJwt)
+            .expect(500)
+            .end(function(err, res) {
+                SubscriptionMock.verify();
+                if (err) throw err;
+                done();
+            });
+    });
+
+    it ('should return 401 on GET /subscriptions with no auth token', function(done) {
+        request(app)
+            .get('/api/v1/subscriptions')
+            .set('Accept', 'application/json')
+            .expect(401, done);
+    });
+
+    it ('should return 401 on GET /subscriptions with no invalid auth token', function(done) {
+        request(app)
+            .get('/api/v1/datasources')
+            .set('Accept', 'application/json')
+            .set('Authorization', 'Bearer 2349823rio32hfj23.sdakfjsdoiajfdsjfoi3')
+            .expect(401, done);
+    });
+
+   it ('should return a single subscription on GET /subscriptions/:id', function(done) {
+        async.each(testSubscriptions, function(testSubscription, callback) {
+            request(app)
+                .get('/api/v1/subscriptions/' + testSubscription.id)
+                .set('Accept', 'application/json')
+                .set('Authorization', 'Bearer ' + tokens.adminJwt)
+                .expect(200)
+                .end(function(err, res) {
+                    if (err) throw err;
+                    expect(Array.isArray(res.body)).to.be.false;
+                    expect(subscriptionsAreEqual(res.body, testSubscription));
+                    callback();
+                });
+        }, 
+        function(err) {
+            if (err) throw err;
+            done();
+        });
+    });
+
+    it ('should return another user\'s subscription on GET /subscriptions/:id with an admin token', function(done) {
+        request(app)
+            .get('/api/v1/subscriptions/' + testSubscriptions[1].id)
+            .set('Accept', 'application/json')
+            .set('Authorization', 'Bearer ' + tokens.adminJwt)
+            .expect(200)
+            .end(function(err, res) {
+                if (err) throw err;
+                expect(Array.isArray(res.body)).to.be.false;
+                expect(subscriptionsAreEqual(res.body, testSubscriptions[1]));
+                done();
+            });
+    });
+
+    it ('should return 401 on GET /subscriptions/:id for a subscription the user does not own (and is not admin)', function(done) {
+        request(app)
+            .get('/api/v1/subscriptions/' + testSubscriptions[0].id)
+            .set('Accept', 'application/json')
+            .set('Authorization', 'Bearer ' + tokens.userJwt)
+            .expect(401, done);
+    });
+
+    it ('should return subscription on GET /subscriptions/:id for a subscription the regular user does own', function(done) {
+        request(app)
+            .get('/api/v1/subscriptions/' + testSubscriptions[2].id)
+            .set('Accept', 'application/json')
+            .set('Authorization', 'Bearer ' + tokens.userJwt)
+            .expect(200)
+            .end(function(err, res) {
+                if (err) throw err;
+                expect(Array.isArray(res.body)).to.be.false;
+                expect(subscriptionsAreEqual(res.body, testSubscriptions[2]));
+                done();
+            });
+    });
+
+    it ('should return 500 on GET /subscriptions/:id with a bogus id', function(done) {
+        request(app)
+            .get('/api/v1/subscriptions/thisisnotanid')
+            .set('Accept', 'application/json')
+            .set('Authorization', 'Bearer ' + tokens.adminJwt)
+            .expect(500, done);
+    });
+
+    it ('should return 404 on GET /subscriptions/:id with a non-existent id', function(done) {
+        request(app)
+            .get('/api/v1/datasources/1111111891171b903f138bf4')
+            .set('Accept', 'application/json')
+            .set('Authorization', 'Bearer ' + tokens.adminJwt)
+            .expect(404, done);
+    });
+
     after(function(done) {
         this.timeout(20000);
         db.collection('subscriptions').drop(function(err, response) {
