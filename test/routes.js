@@ -1038,7 +1038,7 @@ describe('/subscriptions', function () {
 
     it ('should return 404 on GET /subscriptions/:id with a non-existent id', function(done) {
         request(app)
-            .get('/api/v1/datasources/1111111891171b903f138bf4')
+            .get('/api/v1/subscriptions/1111111891171b903f138bf4')
             .set('Accept', 'application/json')
             .set('Authorization', 'Bearer ' + tokens.adminJwt)
             .expect(404, done);
