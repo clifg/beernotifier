@@ -22,6 +22,7 @@ var secrets = require('./config/secrets');
 var users = require('./routes/users');
 var tapListings = require('./routes/tapListings');
 var dataSources = require('./routes/dataSources');
+var subscriptions = require('./routes/subscriptions');
 
 var app = express();
 
@@ -159,6 +160,7 @@ app.get('/api/v1/login', function(req, res) {
 });
 app.use('/api/v1/taplistings', tapListings);
 app.use('/api/v1/datasources', dataSources);
+app.use('/api/v1/subscriptions', subscriptions);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
