@@ -11,6 +11,7 @@ var secrets = require('../config/secrets');
 var User = require('../models/user');
 var DataSource = require('../models/dataSource');
 var TapListing = require('../models/tapListing');
+var Subscription = require('../models/subscription');
 
 var testUsers = [
 {
@@ -30,6 +31,8 @@ var testUsers = [
 }];
 
 var tokens = {};
+var adminUser = testUsers[0];
+var regularUser = testUsers[1];
 
 function addTestUser(user, callback) {
     var newUser = new User();
@@ -764,6 +767,182 @@ describe('/taplistings', function () {
     after(function(done) {
         this.timeout(20000);
         db.collection('taplistings').drop(function(err, response) {
+            if (err) throw err;
+            done();
+        });
+    });
+});
+
+describe('/subscriptions', function () {
+    var testDataSources = [
+    {
+        homeUrl: "http://www.source1.com",
+        name: "Data Source 1",
+        scraper: "scraper1",
+        updates: [
+            new Date('2016-01-21T01:26:42.167Z'),
+            new Date('2016-01-21T01:36:43.319Z'),
+            new Date('2016-01-21T03:26:47.066Z')
+        ]
+    }];
+
+    // For now these are in sorted order so the tests are happy. In the future we should
+    // consider sorting to avoid this constraint but for simple tests this is fine.
+    var testSubscriptions = [
+    {
+        isForAdmin: true,
+        type: 'keyword', 
+        createdDate: new Date('2016-03-01T10:22:13.283Z'),
+        keywordConfig: {
+            keyword: 'ipa'
+        },
+        dataSourceMatches: 'any',
+        dataSourceList: []
+    },
+    {
+        isForAdmin: false,
+        type: 'keyword', 
+        createdDate: new Date('2015-12-01T10:02:18.313Z'),
+        keywordConfig: {
+            keyword: 'imperial stout'
+        },
+        dataSourceMatches: 'any',
+        dataSourceList: []
+    },
+    {
+        isForAdmin: false,
+        type: 'keyword', 
+        createdDate: new Date('2015-12-01T10:02:18.313Z'),
+        keywordConfig: {
+            keyword: 'abyss'
+        },
+        dataSourceMatches: 'list',
+        dataSourceList: []
+    }];
+
+    before(function(done) {
+        this.timeout(20000);
+        if (process.env.NODE_ENV !== 'test') {
+            throw('Tests must be running in node test environment!');
+        }
+        async.series([
+            function(callback) {
+                MongoClient.connect(secrets.db.test, function(err, mongo) {
+                    if (err) throw err;
+                    this.db = mongo;
+                    callback();
+                });
+            },
+            function(callback) {
+                db.collection('datasources').drop(function(err, response) {
+                    if (err && err.errmsg !== 'ns not found') throw err;
+                    callback();
+                });
+            },
+            function(callback) {
+                db.collection('subscriptions').drop(function(err, response) {
+                    if (err && err.errmsg !== 'ns not found') throw err;
+                    callback();
+                });
+            },
+            function(callback) {
+                async.each(testDataSources, function(testDataSource, itrCallback) {
+                    addTestDataSource(testDataSource, itrCallback);
+                }, function(err) {
+                    if (err) throw err;
+                    callback();
+                });
+            },
+            function(callback) {
+                async.each(testSubscriptions, function(testSubscription, itrCallback) {
+                    addTestSubscription(testSubscription, itrCallback);
+                }, function(err) {
+                    if (err) throw err;
+                    callback();
+                });
+            }
+        ],
+        function(err) {
+            if (err) {
+                throw(err);
+            }
+            done();
+        });
+    })
+
+    function addTestDataSource(dataSource, callback) {
+        var testDataSource = new DataSource();
+        testDataSource.name = dataSource.name;
+        testDataSource.homeUrl = dataSource.homeUrl;
+        testDataSource.scraper = dataSource.scraper;
+
+        testDataSource.save(function(err) {
+            if (err) throw err;
+            dataSource.id = testDataSource.id;
+            for (var i = 0; i < testSubscriptions.length; i++) {
+                if (testSubscriptions[i].dataSourceMatches === 'list') {
+                    testSubscriptions[i].dataSourceList = testSubscriptions.dataSourceList || [];
+                    testSubscriptions[i].dataSourceList.push(testDataSource.id);
+                }
+            }
+            callback();
+        });
+    }
+
+    function addTestSubscription(subscription, callback) {
+        var newSubscription = new Subscription();
+        newSubscription.user =  subscription.isForAdmin ? adminUser.id : regularUser.id;
+        newSubscription.type = subscription.type;
+        newSubscription.createdDate = subscription.createdDate;
+        newSubscription.keywordConfig = subscription.keywordConfig;
+        newSubscription.dataSourceMatches = subscription.dataSourceMatches;
+        newSubscription.dataSourceList = subscription.dataSourceList;
+
+        newSubscription.save(function(err) {
+            if (err) throw err;
+            subscription.id = newSubscription.id;
+            callback();
+        });
+    }
+
+    function subscriptionsAreEqual(subscription1, subscription2) {
+        return ((subscription1.user === subscription2.user) &&
+                (subscription1.createdDate === subscription2.createdDate) &&
+                (subscription1.type === subscription2.type) &&
+                (subscription1.keywordConfig === subscription2.keywordConfig) &&
+                (subscription1.dataSourceMatches === subscription2.dataSourceMatches) &&
+                (subscription1.dataSourceList === subscription2.dataSourceList));
+    }
+
+    it ('should return all subscriptions on GET /subscriptions for admin', function(done) {
+        request(app)
+            .get('/api/v1/subscriptions')
+            .set('Accept', 'application/json')
+            .set('Authorization', 'Bearer ' + tokens.adminJwt)
+            .expect(200)
+            .end(function(err, res) {
+                if (err) throw err;
+                expect(Array.isArray(res.body)).to.be.true;
+                expect(res.body.length).to.equal(testSubscriptions.length);
+                for(var i = 0; i < res.body.length; i++)
+                {
+                    expect(subscriptionsAreEqual(res.body[i], testSubscriptions[i]));
+                }
+                done();
+            });
+    });
+
+    it ('should return 401 on GET /subscriptions for regular user', function(done) {
+        request(app)
+            .get('/api/v1/subscriptions')
+            .set('Accept', 'application/json')
+            .set('Authorization', 'Bearer ' + tokens.userJwt)
+            .expect(401, done);
+    });
+
+    after(function(done) {
+        this.timeout(20000);
+        db.collection('subscriptions').drop(function(err, response) {
             if (err) throw err;
             done();
         });
