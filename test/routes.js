@@ -1044,6 +1044,89 @@ describe('/subscriptions', function () {
             .expect(404, done);
     });
 
+    // Keep these tests last!
+    it ('should return 401 on DELETE /subscriptions/:id for a subscription the user does not own (and is not admin)', function(done) {
+        request(app)
+            .delete('/api/v1/subscriptions/' + testSubscriptions[0].id)
+            .set('Authorization', 'Bearer ' + tokens.userJwt)
+            .expect(401, done);
+    });
+
+    it ('should return 200 on DELETE /subscriptions/:id for a subsription the user does own', function(done) {
+        request(app)
+            .delete('/api/v1/subscriptions/' + testSubscriptions[2].id)
+            .set('Authorization', 'Bearer ' + tokens.userJwt)
+            .expect(200)
+            .end(function(err, res) {
+                if (err) throw err;
+                // Make sure the subscription was actually deleted
+                Subscription.findById(testSubscriptions[2].id, function(err, subscription) {
+                    if (err) throw err;
+                    expect(subscription).is.null;
+                    done();
+                });
+            });
+    });
+
+    it ('should return 200 on DELETE /subscriptions/:id for a subsription the user doesn\'t own, if admin', function(done) {
+        request(app)
+            .delete('/api/v1/subscriptions/' + testSubscriptions[1].id)
+            .set('Authorization', 'Bearer ' + tokens.adminJwt)
+            .expect(200)
+            .end(function(err, res) {
+                if (err) throw err;
+                // Make sure the subscription was actually deleted
+                Subscription.findById(testSubscriptions[1].id, function(err, subscription) {
+                    if (err) throw err;
+                    expect(subscription).is.null;
+                    done();
+                });
+            });
+    });
+
+    it ('should return 500 on DELETE /subscriptions/:id with a bogus id', function(done) {
+        request(app)
+            .delete('/api/v1/subscriptions/thisisnotanid')
+            .set('Authorization', 'Bearer ' + tokens.adminJwt)
+            .expect(500, done);
+    });
+
+    it ('should return 404 on DELETE /subscriptions/:id with a non-existent id', function(done) {
+        request(app)
+            .delete('/api/v1/subscriptions/1111111891171b903f138bf4')
+            .set('Authorization', 'Bearer ' + tokens.adminJwt)
+            .expect(404, done);
+    });
+
+    it ('should return 500 on DELETE /subscriptions/:id with internal database error on find', function(done) {
+        var SubscriptionMock = sinon.mock(Subscription);
+        SubscriptionMock.expects('findById')
+            .chain('exec')
+            .yields('error');
+        request(app)
+            .delete('/api/v1/subscriptions/' + testSubscriptions[0].id)
+            .set('Authorization', 'Bearer ' + tokens.adminJwt)
+            .expect(500)
+            .end(function(err, res) {
+                SubscriptionMock.verify();
+                if (err) throw err;
+                done();
+            });
+    });
+
+    it ('should return 500 on DELETE /users/:id with database internal error on remove', function(done) {
+        sinon.stub(Subscription.prototype, 'remove').yields('error');
+        request(app)
+            .delete('/api/v1/subscriptions/' + testSubscriptions[0].id)
+            .set('Authorization', 'Bearer ' + tokens.adminJwt)
+            .expect(500)
+            .end(function(err, res) {
+                Subscription.prototype.remove.restore();
+                if (err) throw err;
+                done();
+            });
+    });
+
     after(function(done) {
         this.timeout(20000);
         db.collection('subscriptions').drop(function(err, response) {

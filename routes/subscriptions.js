@@ -35,4 +35,29 @@ router.get('/:id', function(req, res) {
     });
 });
 
+router.delete('/:id', function(req, res) {
+    Subscription.findById(req.params.id)
+        .exec(function(err, subscription) {
+        if (err) {
+            return res.sendStatus(500);
+        }
+
+        if (!subscription) {
+            return res.sendStatus(404);
+        }
+
+        if (!req.user || (!req.user.isAdmin && (req.user._id != subscription.user))) {
+            return res.sendStatus(401);
+        }
+
+        subscription.remove(function(err) {
+            if (err) {
+                return res.sendStatus(500);
+            }
+
+            res.sendStatus(200);
+        });
+    });
+});
+
 module.exports = router;
