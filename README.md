@@ -1,7 +1,7 @@
 # beernotifier
 Watch local taplists and send notifications
 
-[![Run Status](https://api.shippable.com/projects/56b6dbab1895ca4474738165/badge?branch=master)](https://app.shippable.com/projects/56b6dbab1895ca4474738165)
+[![Run Status](https://api.shippable.com/projects/56b6dbab1895ca4474738165/badge?branch=master)](https://app.shippable.com/projects/56b6dbab1895ca4474738165) [![Coverage Badge](https://api.shippable.com/projects/56b6dbab1895ca4474738165/coverageBadge?branch=master)](https://app.shippable.com/projects/56b6dbab1895ca4474738165)
 
 ## Contributing
 The site is built on the MEAN stack: MongoDB (database), ExpressJS (web service framework), AngularJS (client framework), and Node (server-side Javascript runtime environment). Here are a few tutorials I found useful when learning how this all works:
