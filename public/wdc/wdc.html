@@ -17,10 +17,10 @@
       myConnector.getTableData = function(lastRecordToken) {
           var dataToReturn = [];
           var xhr = $.ajax({
-          url: '/api/v1/taplistings',
-          dataType: 'json',
-          headers: {
-             'Authorization': 'Bearer ' + tableau.connectionData 
+            url: '/api/v1/taplistings',
+            dataType: 'json',
+            headers: {
+              'Authorization': 'Bearer ' + tableau.connectionData 
             },
             success: function(data) {
               for (var i = 0; i < data.length; i++) {
@@ -46,17 +46,30 @@
 
   $(document).ready(function() {
     $("#submitButton").click(function() {
-      var token = $("#token").val().trim();
-      if (token) {
-        tableau.connectionData = token;
-        tableau.submit();
-      }
+      var xhr = $.ajax({
+        type: 'POST',
+        url: '/login',
+        data: {
+          email: $('#email').val().trim(),
+          password: $('#password').val().trim()
+        },
+        dataType: 'json',
+        success: function(data) {
+          tableau.connectionData = data.token;
+          tableau.submit();
+        },
+        error: function(xhr, ajaxOptions, thrownError) {
+          $('#error').text(xhr.responseText + '\n' + thrownError);
+        }
+      })
     });
   });
   </script>
 </head>
 <body>
-  <p>Access token: <input type="text" id="token"/></p>
+  <p>Email: <input type="text" id="email"/></p>
+  <p>Password: <input type="password" id="password"/></p>
   <p><button type="button" id="submitButton">Get the Data</button></p>
+  <p id="error"></p>
 </body>
 </html>
